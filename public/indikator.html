@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Indikator Makro – BPS Kab. Jeneponto</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d2137;--blue:#1a5fb4;--blue2:#2980d4;--accent:#f59e0b;
+  --green:#10b981;--red:#ef4444;--white:#fff;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;
+  --text:#0f172a;--r:10px;--sh:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray50);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* NAVBAR */
+nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.35)}
+.nav-inner{max-width:1400px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:14px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.logo-box{width:38px;height:38px;background:var(--white);border-radius:7px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;padding:4px;gap:2px}
+.logo-box span{border-radius:1px}
+.lb1{background:#1565c0}.lb2{background:#ff6f00}.lb3{background:#2e7d32}.lb4{background:#c62828}
+.nav-title{color:var(--white);font-size:.82rem;font-weight:700;line-height:1.3}
+.nav-title small{font-size:.68rem;opacity:.65;font-weight:400;display:block}
+.nav-spacer{flex:1}
+.nav-btn{color:rgba(255,255,255,.8);text-decoration:none;font-size:.82rem;font-weight:500;padding:7px 13px;border-radius:6px;transition:.2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nav-btn:hover{color:var(--white);background:rgba(255,255,255,.1)}
+.nav-btn.active{background:rgba(255,255,255,.15);color:var(--white)}
+.nav-user{color:rgba(255,255,255,.7);font-size:.78rem;display:flex;align-items:center;gap:6px}
+.nav-user strong{color:var(--white)}
+
+/* TOOLBAR */
+.toolbar{background:var(--white);border-bottom:1px solid var(--gray200);padding:10px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar-inner{max-width:1400px;margin:0 auto;width:100%;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sheet-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.sheet-tab{padding:6px 14px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.8rem;font-weight:600;color:var(--gray600);cursor:pointer;background:var(--white);transition:.2s;white-space:nowrap}
+.sheet-tab:hover{border-color:var(--blue);color:var(--blue)}
+.sheet-tab.active{border-color:var(--blue);background:var(--blue);color:var(--white)}
+.tb-sep{color:var(--gray200);font-size:1.2rem}
+.search-ind{padding:7px 12px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.84rem;outline:none;width:240px;background:var(--gray50);transition:.2s}
+.search-ind:focus{border-color:var(--blue);background:var(--white)}
+.edit-badge{padding:5px 12px;border-radius:99px;font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:5px}
+.edit-badge.on{background:rgba(16,185,129,.12);color:#065f46;border:1px solid rgba(16,185,129,.3)}
+.edit-badge.off{background:rgba(100,116,139,.08);color:var(--gray500);border:1px solid var(--gray200)}
+.btn-login-quick{padding:6px 14px;background:var(--blue);color:var(--white);border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-login-quick:hover{background:var(--navy)}
+.btn-save-ind{padding:6px 14px;background:var(--green);color:var(--white);border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;display:none;align-items:center;gap:5px;transition:.2s}
+.btn-save-ind:hover{background:#059669}
+.btn-save-ind.visible{display:flex}
+
+/* TABLE */
+.tbl-wrap{flex:1;overflow:auto;padding:16px 20px 40px}
+.tbl-inner{max-width:1400px;margin:0 auto}
+.info-bar{font-size:.8rem;color:var(--gray500);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+table{border-collapse:collapse;font-size:.83rem;background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);min-width:100%}
+thead{position:sticky;top:0;z-index:10}
+th{background:var(--navy);color:rgba(255,255,255,.9);padding:9px 14px;text-align:center;font-weight:700;font-size:.75rem;white-space:nowrap;border-right:1px solid rgba(255,255,255,.1);min-width:80px}
+th:first-child{text-align:left;min-width:320px;position:sticky;left:0;z-index:20;border-right:2px solid rgba(255,255,255,.2)}
+th:nth-child(2){min-width:90px;position:sticky;left:320px;z-index:20}
+td{padding:8px 12px;border-bottom:1px solid var(--gray100);border-right:1px solid var(--gray100);white-space:nowrap;color:var(--gray800);vertical-align:middle}
+td:first-child{background:var(--white);font-weight:500;color:var(--navy);position:sticky;left:0;z-index:5;min-width:320px;border-right:2px solid var(--gray200);font-size:.82rem;padding-left:16px}
+td:nth-child(2){background:var(--gray50);position:sticky;left:320px;z-index:5;min-width:90px;color:var(--gray500);font-size:.77rem}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+td.section-header{background:linear-gradient(90deg,var(--navy) 0%,var(--blue) 100%);color:var(--white);font-weight:700;font-size:.85rem;padding:10px 16px;position:sticky;left:0;letter-spacing:.3px}
+td.section-header-full{background:linear-gradient(90deg,#0a1f3e,var(--navy));color:rgba(255,255,255,.8);font-weight:600;font-size:.8rem;text-align:center}
+tr:hover td:not(.section-header){background-color:#f0f7ff}
+tr:hover td:first-child{background-color:#e8f0fe}
+tr.highlighted td{background:#fffbeb!important}
+
+/* Editable cell */
+td.editable{cursor:text;position:relative}
+td.editable:hover::after{content:'✏';position:absolute;top:2px;right:4px;font-size:.65rem;opacity:.4}
+td.editable input{width:100%;border:none;outline:none;background:transparent;font:inherit;text-align:right;color:inherit;padding:0}
+td.editable.editing{background:#fffbeb!important;box-shadow:inset 0 0 0 2px var(--accent)}
+td.editable.changed{background:rgba(245,158,11,.08)!important}
+
+/* Loader */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;color:var(--gray400);padding:60px}
+.spin{width:40px;height:40px;border:4px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOGIN MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.login-modal{background:var(--white);border-radius:14px;padding:32px;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.lm-title{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.lm-sub{font-size:.82rem;color:var(--gray500);margin-bottom:22px}
+.lm-tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--gray100);border-radius:8px;padding:3px}
+.lm-tab{flex:1;padding:7px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray500);transition:.2s}
+.lm-tab.active{background:var(--white);color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.form-g{margin-bottom:14px}
+.form-l{font-size:.72rem;font-weight:700;color:var(--gray600);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.form-i{width:100%;padding:9px 12px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.88rem;outline:none;background:var(--gray50);transition:.2s}
+.form-i:focus{border-color:var(--blue);background:var(--white)}
+.lm-err{display:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:9px 12px;font-size:.8rem;margin-bottom:12px}
+.lm-err.show{display:block}
+.btn-submit{width:100%;padding:11px;background:var(--blue);color:var(--white);border:none;border-radius:8px;font-size:.92rem;font-weight:700;cursor:pointer;transition:.2s}
+.btn-submit:hover{background:var(--navy)}
+.lm-close{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gray400);line-height:1;margin-top:-4px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--gray800);color:var(--white);padding:11px 18px;border-radius:9px;font-size:.84rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);transition:.3s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:none}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}
+
+/* Sumber data */
+.src-foot{background:var(--navy);color:#cbd5e1;font-size:.78rem;margin-top:24px}
+.src-foot-in{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;line-height:1.6}
+.src-foot-in a{color:#93c5fd;text-decoration:none}
+.src-foot-in a:hover{text-decoration:underline}
+.src-foot-in .src-up{margin-left:auto;color:#94a3b8}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <img src="/assets/logo-bps.png" alt="BPS" style="width:42px;height:42px;object-fit:contain;background:white;border-radius:7px;padding:3px"/>
+      <div class="nav-title">BPS Kabupaten Jeneponto<small>Indikator Makro Ekonomi</small></div>
+    </a>
+    <div class="nav-spacer"></div>
+    <a class="nav-btn" href="/">Beranda</a>
+    <a class="nav-btn active" href="/indikator.html">Indikator Makro</a>
+    <a class="nav-btn" href="/tabel.html">Tabel Dinamis</a>
+    <div class="nav-user" id="navUser">
+      <button class="btn-login-quick" onclick="bukaLogin()">Login untuk Edit</button>
+    </div>
+  </div>
+</nav>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="sheet-tabs" id="sheetTabs"></div>
+    <span class="tb-sep">|</span>
+    <input class="search-ind" id="searchInd" type="text" placeholder="🔍 Cari indikator…"/>
+    <span class="tb-sep">|</span>
+    <span class="edit-badge off" id="editBadge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Hanya Baca
+    </span>
+    <button class="btn-save-ind" id="btnSave" onclick="simpanPerubahan()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Simpan Perubahan
+    </button>
+  </div>
+</div>
+
+<!-- TABLE AREA -->
+<div class="tbl-wrap" id="tblWrap">
+  <div class="loader" id="loader">
+    <div class="spin"></div><p>Memuat data indikator…</p>
+  </div>
+  <div class="tbl-inner" id="tblInner" style="display:none">
+    <div class="info-bar">
+      <span id="infoBar">–</span>
+      <span id="loginInfo" style="font-size:.77rem;color:var(--gray400)"></span>
+    </div>
+    <div id="tblContainer"></div>
+  </div>
+</div>
+
+<!-- SUMBER DATA -->
+<footer class="src-foot">
+  <div class="src-foot-in">
+    <b>Data terhubung:</b>
+    <a href="https://s.bps.go.id/7304_indikatormakro" target="_blank" rel="noopener">Indikator Makro BPS Jeneponto (Google Sheets)</a>
+    <span>·</span>
+    <a href="https://jenepontokab.bps.go.id" target="_blank" rel="noopener">jenepontokab.bps.go.id</a>
+    <span>·</span>
+    <a href="https://sulsel.bps.go.id" target="_blank" rel="noopener">sulsel.bps.go.id</a>
+    <span class="src-up" id="srcUp"></span>
+  </div>
+</footer>
+
+<!-- LOGIN MODAL -->
+<div class="modal-bg" id="loginModal">
+  <div class="login-modal">
+    <button class="lm-close" onclick="tutupLogin()">×</button>
+    <div class="lm-title">Masuk untuk Edit Data</div>
+    <p class="lm-sub">Login atau daftar untuk dapat mengedit data indikator</p>
+    <div class="lm-tabs">
+      <button class="lm-tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+      <button class="lm-tab" id="tabReg" onclick="switchTab('register')">Daftar</button>
+    </div>
+    <div id="loginErr" class="lm-err"></div>
+
+    <!-- Login form -->
+    <div id="formLogin">
+      <div class="form-g"><label class="form-l">Username</label><input class="form-i" id="lUser" type="text" autocomplete="username"/></div>
+      <div class="form-g"><label class="form-l">Password</label><input class="form-i" id="lPass" type="password" autocomplete="current-password"/></div>
+      <button class="btn-submit" onclick="doLogin()">Masuk</button>
+    </div>
+
+    <!-- Register form -->
+    <div id="formReg" style="display:none">
+      <div class="form-g"><label class="form-l">Nama Lengkap</label><input class="form-i" id="rNama" type="text"/></div>
+      <div class="form-g"><label class="form-l">Username</label><input class="form-i" id="rUser" type="text" autocomplete="username"/></div>
+      <div class="form-g"><label class="form-l">Password (min. 6 karakter)</label><input class="form-i" id="rPass" type="password"/></div>
+      <button class="btn-submit" onclick="doRegister()">Daftar Akun</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let token    = localStorage.getItem('bps_token')  || '';
+let userNama = localStorage.getItem('bps_nama')   || '';
+let userRole = localStorage.getItem('bps_role')   || '';
+let sheetData = {};      // { sheetName: [[...rows]] }
+let curSheet  = '';
+let filteredRows = [];   // indices of displayed rows
+let pendingChanges = {}; // { "row,col": value }
+let canEdit   = false;
+
+// ── Boot ───────────────────────────────────────────────────────
+(async () => {
+  updateNavUser();
+  await loadSheets();
+  try {
+    const r = await fetch('/api/sumber');
+    const j = await r.json();
+    const s = (j.sumber||[]).find(x => x.id==='indikator-makro');
+    if (s && s.updateTerakhir) {
+      document.getElementById('srcUp').textContent = '↻ Diperbarui otomatis: ' +
+        new Date(s.updateTerakhir).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+    }
+  } catch {}
+})();
+
+// ── Load daftar sheet ─────────────────────────────────────────
+async function loadSheets() {
+  const r = await fetch('/api/indikator');
+  const j = await r.json();
+  const tabs = document.getElementById('sheetTabs');
+  const MAIN = ['Tahunan','Triwulanan','Bulanan','Summary'];
+  const order = [...MAIN.filter(s=>j.sheets.includes(s)), ...j.sheets.filter(s=>!MAIN.includes(s))];
+  order.forEach((s,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sheet-tab' + (i===0?' active':'');
+    btn.textContent = s;
+    btn.dataset.sheet = s;
+    btn.onclick = () => pilihSheet(s);
+    tabs.appendChild(btn);
+  });
+  if (order.length) pilihSheet(order[0]);
+}
+
+// ── Pilih sheet ───────────────────────────────────────────────
+async function pilihSheet(sheet) {
+  curSheet = sheet;
+  pendingChanges = {};
+  document.getElementById('btnSave').classList.remove('visible');
+
+  // Update tab active
+  document.querySelectorAll('.sheet-tab').forEach(b => b.classList.toggle('active', b.dataset.sheet===sheet));
+
+  // Load if not cached
+  if (!sheetData[sheet]) {
+    document.getElementById('loader').style.display='flex';
+    document.getElementById('tblInner').style.display='none';
+    const r = await fetch(`/api/indikator/${encodeURIComponent(sheet)}`);
+    const j = await r.json();
+    sheetData[sheet] = j.rows;
+    document.getElementById('loader').style.display='none';
+    document.getElementById('tblInner').style.display='block';
+  }
+  renderTable();
+}
+
+// ── Render table ──────────────────────────────────────────────
+function renderTable() {
+  const rows = sheetData[curSheet] || [];
+  const q    = document.getElementById('searchInd').value.toLowerCase().trim();
+
+  // Find header row (row with tahun columns like 2010, 2011...)
+  let headerRow = -1;
+  for (let i=0; i<Math.min(rows.length,10); i++) {
+    const r = rows[i];
+    if (r && r.some(c => /^20\d{2}$/.test(String(c||'').trim()))) { headerRow=i; break; }
+  }
+
+  // Build visible rows
+  filteredRows = [];
+  rows.forEach((row, i) => {
+    if (!row || row.every(c => c===null||c==='')) return;
+    const first = String(row[0]||'').trim();
+    if (!first) return;
+    if (q && !row.some(c => String(c||'').toLowerCase().includes(q))) return;
+    filteredRows.push(i);
+  });
+
+  // Header
+  let colHeaders = [];
+  if (headerRow >= 0) {
+    colHeaders = (rows[headerRow]||[]).map(c => String(c||'').trim()).filter(Boolean);
+  }
+
+  // Render
+  let html = '<table><thead><tr>';
+  if (colHeaders.length) {
+    colHeaders.forEach((h,i) => {
+      if (i===0) html += `<th style="min-width:320px">${esc(h)}</th>`;
+      else if (i===1) html += `<th style="min-width:90px">${esc(h)}</th>`;
+      else html += `<th>${esc(h)}</th>`;
+    });
+  } else {
+    html += '<th>Indikator</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  let visCount = 0;
+  filteredRows.forEach(ri => {
+    const row = rows[ri];
+    const first = String(row[0]||'').trim();
+
+    // Section header detection
+    const isSection = row.length <= 3 && row.slice(1).every(c=>!c||c==='') && first.length > 5;
+    const isYearHeader = colHeaders.length && ri === headerRow;
+    if (isYearHeader) return; // skip header row in body
+
+    if (isSection) {
+      html += `<tr><td class="section-header" colspan="${Math.max(colHeaders.length,2)}">${esc(first)}</td></tr>`;
+      return;
+    }
+
+    html += '<tr>';
+    const maxCol = Math.max(colHeaders.length, row.length);
+    for (let ci=0; ci<maxCol; ci++) {
+      const val = String(row[ci]??'');
+      if (ci===0) { html += `<td>${esc(val)}</td>`; continue; }
+      if (ci===1) { html += `<td>${esc(val)}</td>`; continue; }
+
+      const isNum = val && !isNaN(val.replace(/[,.]/g,'')) && val.trim()!=='';
+      const editAttr = canEdit ? `class="editable num" data-row="${ri}" data-col="${ci}"` : `class="num"`;
+      const changed  = pendingChanges[`${ri},${ci}`] !== undefined;
+      const dispVal  = pendingChanges[`${ri},${ci}`] ?? val;
+
+      if (canEdit && isNum) {
+        html += `<td ${editAttr}${changed?' style="background:rgba(245,158,11,.12)"':''}>${esc(String(dispVal))}</td>`;
+      } else {
+        html += `<td class="num">${esc(String(dispVal))}</td>`;
+      }
+    }
+    html += '</tr>';
+    visCount++;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('tblContainer').innerHTML = html;
+  document.getElementById('infoBar').textContent =
+    `Sheet: ${curSheet}  |  ${visCount} indikator ditampilkan${q?` (filter: "${q}")` : ''}`;
+  document.getElementById('loginInfo').textContent =
+    canEdit ? `✏ Mode Edit Aktif — klik sel angka untuk mengedit` : `🔒 Login untuk mengaktifkan mode edit`;
+
+  // Attach edit events
+  if (canEdit) {
+    document.querySelectorAll('td.editable').forEach(td => {
+      td.addEventListener('dblclick', () => startEdit(td));
+    });
+  }
+}
+
+// ── Cell editing ──────────────────────────────────────────────
+function startEdit(td) {
+  if (td.classList.contains('editing')) return;
+  const row = td.dataset.row; const col = td.dataset.col;
+  const val = td.textContent.trim();
+  td.classList.add('editing');
+  td.innerHTML = `<input type="text" value="${esc(val)}" style="width:70px;text-align:right"/>`;
+  const inp = td.querySelector('input');
+  inp.focus(); inp.select();
+  inp.addEventListener('blur', () => commitEdit(td, row, col, inp.value));
+  inp.addEventListener('keydown', e => {
+    if (e.key==='Enter') inp.blur();
+    if (e.key==='Escape') { td.classList.remove('editing'); td.textContent = val; }
+  });
+}
+
+function commitEdit(td, row, col, newVal) {
+  const key = `${row},${col}`;
+  const orig = String(sheetData[curSheet][row]?.[col] ?? '');
+  td.classList.remove('editing');
+  if (newVal !== orig) {
+    pendingChanges[key] = newVal;
+    td.textContent = newVal;
+    td.style.background = 'rgba(245,158,11,.12)';
+    document.getElementById('btnSave').classList.add('visible');
+  } else {
+    td.textContent = newVal;
+    td.style.background = '';
+  }
+}
+
+// ── Simpan perubahan ──────────────────────────────────────────
+async function simpanPerubahan() {
+  const keys = Object.keys(pendingChanges);
+  if (!keys.length) return;
+  const btn = document.getElementById('btnSave');
+  btn.textContent = 'Menyimpan…'; btn.disabled = true;
+
+  let ok = 0; let err = 0;
+  for (const key of keys) {
+    const [row, col] = key.split(',').map(Number);
+    const value = pendingChanges[key];
+    const r = await fetch(`/api/indikator/${encodeURIComponent(curSheet)}/cell`, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ row, col, value })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      if (!sheetData[curSheet][row]) sheetData[curSheet][row] = [];
+      sheetData[curSheet][row][col] = value;
+      ok++;
+    } else { err++; }
+  }
+
+  pendingChanges = {};
+  btn.disabled = false; btn.classList.remove('visible');
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Simpan Perubahan';
+
+  if (err) toast(`${ok} tersimpan, ${err} gagal`, 'error');
+  else { toast(`${ok} perubahan berhasil disimpan`, 'success'); renderTable(); }
+}
+
+// ── Search ────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('searchInd').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(renderTable, 200);
+});
+
+// ── Auth ──────────────────────────────────────────────────────
+function updateNavUser() {
+  const nav = document.getElementById('navUser');
+  const badge = document.getElementById('editBadge');
+  const loginInfo = document.getElementById('loginInfo');
+
+  if (token) {
+    canEdit = true;
+    nav.innerHTML = `
+      <span class="nav-user">Halo, <strong>${esc(userNama)}</strong></span>
+      <button class="btn-login-quick" style="background:#ef4444" onclick="doLogout()">Keluar</button>`;
+    badge.className = 'edit-badge on';
+    badge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Mode Edit Aktif';
+    document.getElementById('btnSave').style.display = 'none';
+  } else {
+    canEdit = false;
+    nav.innerHTML = `<button class="btn-login-quick" onclick="bukaLogin()">Login untuk Edit</button>`;
+    badge.className = 'edit-badge off';
+    badge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Hanya Baca';
+  }
+}
+
+function bukaLogin()  { document.getElementById('loginModal').classList.add('show'); }
+function tutupLogin() { document.getElementById('loginModal').classList.remove('show'); }
+
+function switchTab(tab) {
+  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
+  document.getElementById('tabReg').classList.toggle('active',tab==='register');
+  document.getElementById('formLogin').style.display = tab==='login'?'':'none';
+  document.getElementById('formReg').style.display   = tab==='register'?'':'none';
+  document.getElementById('loginErr').classList.remove('show');
+}
+
+async function doLogin() {
+  const u = document.getElementById('lUser').value.trim();
+  const p = document.getElementById('lPass').value;
+  const err = document.getElementById('loginErr');
+  err.classList.remove('show');
+
+  // Coba user login dulu, lalu admin
+  let r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p}) });
+  let j = await r.json();
+  if (!j.ok) {
+    // Coba admin login
+    r = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p}) });
+    j = await r.json();
+  }
+  if (!j.ok) { err.textContent = j.error; err.classList.add('show'); return; }
+
+  token = j.token; userNama = j.nama; userRole = j.role;
+  localStorage.setItem('bps_token', token);
+  localStorage.setItem('bps_nama',  userNama);
+  localStorage.setItem('bps_role',  userRole);
+  tutupLogin();
+  updateNavUser();
+  renderTable();
+  toast(`Selamat datang, ${userNama}!`, 'success');
+}
+
+async function doRegister() {
+  const nama = document.getElementById('rNama').value.trim();
+  const u    = document.getElementById('rUser').value.trim();
+  const p    = document.getElementById('rPass').value;
+  const err  = document.getElementById('loginErr');
+  err.classList.remove('show');
+
+  const r = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p,nama}) });
+  const j = await r.json();
+  if (!j.ok) { err.textContent = j.error; err.classList.add('show'); return; }
+
+  token = j.token; userNama = j.nama; userRole = j.role;
+  localStorage.setItem('bps_token', token);
+  localStorage.setItem('bps_nama',  userNama);
+  localStorage.setItem('bps_role',  userRole);
+  tutupLogin();
+  updateNavUser();
+  renderTable();
+  toast(`Akun berhasil dibuat! Selamat datang, ${userNama}!`, 'success');
+}
+
+function doLogout() {
+  token=''; userNama=''; userRole='';
+  localStorage.removeItem('bps_token');
+  localStorage.removeItem('bps_nama');
+  localStorage.removeItem('bps_role');
+  canEdit = false;
+  updateNavUser();
+  renderTable();
+  toast('Berhasil keluar');
+}
+
+document.getElementById('lPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ── Helpers ───────────────────────────────────────────────────
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className='toast show'+(type?' '+type:'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+</script>
+</body>
+</html>

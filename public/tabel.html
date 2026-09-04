@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tabel Dinamis – BPS Kab. Jeneponto</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d2137;--blue:#1a5fb4;--blue2:#2980d4;--accent:#f59e0b;
+  --green:#10b981;--purple:#7c3aed;--orange:#f97316;
+  --white:#fff;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;
+  --text:#0f172a;--r:10px;--sh:0 2px 14px rgba(0,0,0,.09);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray50);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* NAVBAR */
+nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.35)}
+.nav-inner{max-width:1400px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.nav-logo img{width:38px;height:38px;object-fit:contain;background:rgba(255,255,255,.1);border-radius:7px;padding:3px}
+.nav-title{color:var(--white);font-size:.82rem;font-weight:700;line-height:1.3}
+.nav-title small{font-size:.67rem;opacity:.65;font-weight:400;display:block}
+.nav-spacer{flex:1}
+.nav-btn{color:rgba(255,255,255,.75);text-decoration:none;font-size:.82rem;font-weight:500;padding:7px 12px;border-radius:6px;transition:.2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nav-btn:hover{color:var(--white);background:rgba(255,255,255,.1)}
+.nav-btn.active{background:rgba(255,255,255,.15);color:var(--white)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#061429 0%,#0d2a52 40%,#0f3872 100%);padding:36px 20px 44px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px}
+.hero-inner{max-width:1400px;margin:0 auto;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.9);font-size:.73rem;font-weight:700;padding:4px 13px;border-radius:99px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+.hero h1{color:var(--white);font-size:clamp(1.3rem,3vw,2rem);font-weight:800;margin-bottom:8px;line-height:1.3}
+.hero h1 span{color:var(--accent)}
+.hero p{color:rgba(255,255,255,.65);font-size:.88rem;margin-bottom:22px;max-width:600px;line-height:1.6}
+.hero-search{position:relative;max-width:580px}
+.hero-input{width:100%;padding:14px 52px 14px 20px;border-radius:12px;border:2px solid transparent;font-size:.95rem;background:rgba(255,255,255,.97);outline:none;box-shadow:0 6px 30px rgba(0,0,0,.25);transition:.3s}
+.hero-input:focus{border-color:var(--accent);box-shadow:0 6px 30px rgba(0,0,0,.25),0 0 0 4px rgba(245,158,11,.2)}
+.hero-search-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--blue);pointer-events:none}
+.hero-hint{margin-top:10px;color:rgba(255,255,255,.45);font-size:.76rem}
+
+/* STATS */
+.stats-bar{background:var(--white);border-bottom:1px solid var(--gray200);padding:12px 20px}
+.stats-inner{max-width:1400px;margin:0 auto;display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.sitem{display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--gray500)}
+.sitem strong{color:var(--blue);font-size:1rem;font-weight:800}
+.ssep{color:var(--gray200)}
+
+/* MAIN */
+.main{max-width:1400px;margin:0 auto;padding:24px 20px 60px;flex:1}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.section-title{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:800;color:var(--navy)}
+.section-title span{font-size:.72rem;font-weight:500;color:var(--green);background:rgba(16,185,129,.12);padding:2px 9px;border-radius:99px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.fl{font-size:.75rem;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.4px}
+.fsel{padding:7px 11px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.83rem;background:var(--white);outline:none;color:var(--text);transition:.2s}
+.fsel:focus{border-color:var(--blue)}
+.result-info{font-size:.85rem;color:var(--gray500);margin-left:auto}
+.result-info strong{color:var(--navy)}
+
+/* GRID */
+.tbl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+
+/* CARD */
+.tbl-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:20px;transition:transform .2s,box-shadow .2s;border-left:4px solid var(--gray200);cursor:pointer}
+.tbl-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.13);border-left-color:var(--blue)}
+.tbl-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.var-id{font-size:.7rem;font-weight:700;color:var(--gray400);background:var(--gray100);padding:3px 8px;border-radius:4px;white-space:nowrap}
+.tbl-kat{font-size:.69rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.kat-ipm{background:rgba(16,185,129,.12);color:#047857}
+.kat-pdrb{background:rgba(139,92,246,.12);color:#7c3aed}
+.kat-kpdk{background:rgba(37,99,235,.12);color:#1d4ed8}
+.kat-lain{background:rgba(100,116,139,.1);color:var(--gray600)}
+.tbl-title{font-size:.92rem;font-weight:700;color:var(--navy);line-height:1.4;margin-bottom:6px}
+.tbl-subjek{font-size:.77rem;color:var(--gray500);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.tbl-def{font-size:.78rem;color:var(--gray600);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px}
+.tbl-preview{margin-bottom:12px;background:var(--gray50);border:1px solid var(--gray100);border-radius:7px;overflow:hidden}
+.tbl-preview .pv-title{font-size:.68rem;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.3px;padding:6px 10px;background:var(--gray100);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray200)}
+.tbl-preview table{width:100%;border-collapse:collapse;font-size:.7rem;min-width:0}
+.tbl-preview th{padding:4px 8px;text-align:right;font-weight:600;color:var(--gray600);white-space:nowrap;background:var(--gray50)}
+.tbl-preview th:first-child{text-align:left}
+.tbl-preview td{padding:4px 8px;text-align:right;color:var(--gray600);white-space:nowrap;border-top:1px solid var(--gray100);font-variant-numeric:tabular-nums}
+.tbl-preview td:first-child{text-align:left;color:var(--navy);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.tbl-preview .pv-loading{padding:10px;font-size:.72rem;color:var(--gray400);display:flex;align-items:center;gap:7px}
+.tbl-foot{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--gray100)}
+.tbl-foot a{font-size:.78rem;font-weight:600;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:4px;transition:.2s}
+.tbl-foot a:hover{color:var(--navy)}
+.tbl-foot a svg{transition:transform .2s}
+.tbl-card:hover .tbl-foot a svg{transform:translateX(3px)}
+.mini-excel{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(22,163,74,.35);background:rgba(22,163,74,.09);color:#15803d;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;transition:.2s;text-decoration:none}
+.mini-excel:hover{background:#16a34a;color:#fff}
+.mini-excel .lbl-sv{transition:transform .2s}
+.mini-excel:hover .lbl-sv{transform:translateX(2px)}
+.tbl-preview .pv-err{padding:8px 10px;font-size:.7rem;color:var(--gray400)}
+
+/* DATA TABLE */
+.dtable-wrap{overflow-x:auto;border:1px solid var(--gray200);border-radius:8px;margin-top:16px}
+.dtable{width:100%;border-collapse:collapse;font-size:.76rem;min-width:720px}
+.dtable thead th{background:var(--navy);color:var(--white);padding:8px 9px;text-align:left;font-weight:600;white-space:nowrap;position:sticky;top:0}
+.dtable thead th.y {text-align:right;background:#122b4d}
+.dtable tbody td{padding:7px 9px;border-bottom:1px solid var(--gray100);color:var(--gray600);white-space:nowrap}
+.dtable tbody td.ind{font-weight:600;color:var(--navy);max-width:260px;white-space:normal}
+.dtable tbody td.y{text-align:right;font-variant-numeric:tabular-nums}
+.dtable tbody tr:nth-child(even){background:var(--gray50)}
+.dtable tbody tr:hover{background:#eef4fc}
+.dtable tbody td.empty{color:var(--gray300)}
+.dtable .sat{font-size:.68rem;color:var(--gray400);font-weight:400}
+.dtable tfoot td{font-size:.72rem;color:var(--gray400);background:var(--gray50);padding:7px 9px}
+.ket-badge{color:var(--gray400);font-size:.76rem;margin-top:8px;line-height:1.6}
+
+/* MAKRO SECTION */
+.makro-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:24px}
+.makro-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:18px;cursor:pointer;transition:.2s;border-top:3px solid var(--blue)}
+.makro-card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,0,0,.12)}
+.makro-card h4{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+.makro-card p{font-size:.76rem;color:var(--gray500);margin-bottom:10px}
+.makro-card .mc-row{display:flex;justify-content:space-between;font-size:.74rem;padding:4px 0;border-bottom:1px dashed var(--gray100);color:var(--gray600)}
+.makro-card .mc-row:last-child{border-bottom:none}
+.makro-card .mc-row span{color:var(--navy);font-weight:600}
+
+/* MODAL DATA */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:900px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.35);display:flex;flex-direction:column}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;position:sticky;top:0;background:var(--white);z-index:1}
+.modal-head h3{font-size:1rem;font-weight:700;color:var(--navy);line-height:1.4;max-width:700px}
+.modal-head small{font-size:.75rem;color:var(--gray400);display:block;margin-top:3px}
+.modal-close{width:28px;height:28px;border:none;background:var(--gray100);border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--gray500);flex-shrink:0;transition:.2s}
+.modal-close:hover{background:var(--gray200)}
+.modal-body{padding:22px;flex:1}
+.modal-toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:var(--white)}.btn-primary:hover{background:var(--navy)}
+.btn-bps{background:var(--navy);color:var(--white)}.btn-bps:hover{background:#0a1a2f}
+.btn-excel{background:#16a34a;color:var(--white)}.btn-excel:hover{background:#15803d}
+.btn-ghost{background:transparent;color:var(--gray600);border:1.5px solid var(--gray200)}.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.modal-info{background:var(--gray50);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:.83rem;color:var(--gray600);line-height:1.6}
+.modal-info strong{color:var(--navy)}
+.iframe-wrap{border:1px solid var(--gray200);border-radius:8px;overflow:hidden}
+.iframe-wrap iframe{width:100%;height:520px;display:block;border:none}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--gray400)}
+.empty-icon{font-size:2.5rem;margin-bottom:12px}
+
+/* Loader */
+.loader-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.skel{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:20px;height:160px;background:linear-gradient(90deg,var(--gray100) 25%,var(--gray50) 50%,var(--gray100) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--gray800);color:var(--white);padding:11px 18px;border-radius:9px;font-size:.84rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);transition:.3s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:none}
+.toast.success{background:var(--green)}.toast.error{background:#ef4444}
+
+/* Spinner */
+.spinner{width:14px;height:14px;border:2px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Footer */
+footer{background:var(--navy);color:rgba(255,255,255,.6);text-align:center;padding:22px 20px;font-size:.8rem;line-height:1.7}
+footer a{color:rgba(255,255,255,.45);text-decoration:none}
+footer a:hover{color:var(--white)}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <img src="/assets/logo-bps.png" alt="BPS"/>
+      <div class="nav-title">BPS Kabupaten Jeneponto<small>Tabel Dinamis</small></div>
+    </a>
+    <div class="nav-spacer"></div>
+    <a class="nav-btn" href="/">Publikasi</a>
+    <a class="nav-btn" href="/indikator.html">Indikator Makro</a>
+    <a class="nav-btn active" href="/tabel.html">Tabel Dinamis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">📊 Query Builder BPS Jeneponto</div>
+    <h1>Tabel Dinamis<br><span>Kabupaten Jeneponto</span></h1>
+    <p>Akses cepat 44 tabel statistik dari Query Builder BPS — mulai dari IPM, PDRB, Kemiskinan, hingga Ketenagakerjaan</p>
+    <div class="hero-search">
+      <input class="hero-input" id="searchInput" type="text" placeholder="Cari nama tabel, indikator, atau kategori…" autocomplete="off"/>
+      <svg class="hero-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+    <p class="hero-hint" id="heroHint">Memuat data…</p>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="sitem"><strong id="stTotal">–</strong><span>Total Tabel</span></div>
+    <span class="ssep">|</span>
+    <div class="sitem"><strong id="stKat">–</strong><span>Kategori</span></div>
+    <span class="ssep">|</span>
+    <div class="sitem">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      <span>Sumber: <a href="https://jenepontokab.bps.go.id/id/query-builder" target="_blank" style="color:var(--blue)">BPS Jeneponto Query Builder</a></span>
+    </div>
+    <div class="sitem" style="margin-left:auto;font-size:.75rem" id="lastUpdate"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- Filter -->
+  <div class="filter-bar">
+    <span class="fl">Kategori:</span>
+    <select class="fsel" id="filterKat" onchange="applyFilter()">
+      <option value="">Semua</option>
+    </select>
+    <select class="fsel" id="filterSubjek" onchange="applyFilter()">
+      <option value="">Semua Subjek</option>
+    </select>
+    <span class="result-info" id="resultInfo"></span>
+  </div>
+
+  <!-- Data Makro (langsung tampil angka) -->
+  <div class="section-head">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Tabel Statistik Makro <span>(data langsung, tanpa login)</span>
+    </div>
+    <button class="btn btn-ghost" onclick="exportAll()" style="padding:5px 11px;font-size:.75rem">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Ekspor Semua (Excel)
+    </button>
+  </div>
+  <div class="makro-grid" id="makroGrid"></div>
+
+  <!-- Loading skeleton -->
+  <div id="skeletons" class="loader-grid">
+    <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+  </div>
+
+  <!-- Grid -->
+  <div class="tbl-grid" id="tblGrid" style="display:none"></div>
+
+  <!-- Empty -->
+  <div class="empty" id="emptyState" style="display:none">
+    <div class="empty-icon">🔍</div>
+    <p id="emptyMsg">Tidak ada tabel yang ditemukan.</p>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="modalTitle">–</h3>
+        <small id="modalMeta">–</small>
+      </div>
+      <button class="modal-close" onclick="tutupModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-toolbar">
+        <a id="btnBPS" href="https://jenepontokab.bps.go.id/id/query-builder" target="_blank" class="btn btn-bps" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Buka Query Builder BPS
+        </a>
+        <a id="btnExcel" href="#" class="btn btn-excel" download>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Ekspor Excel
+        </a>
+        <button class="btn btn-ghost" onclick="tutupModal()">Tutup</button>
+      </div>
+      <div class="modal-info" id="modalInfo"></div>
+      <div id="dataArea">
+        <div style="display:flex;align-items:center;gap:10px;color:var(--gray500);font-size:.83rem;padding:14px 0">
+          <span class="spinner"></span> Memuat data tabel…</div>
+      </div>
+      <div id="guideArea">
+      <div style="background:var(--gray50);border-radius:10px;padding:16px 18px;border-left:4px solid var(--blue)">
+        <p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:8px">
+          💡 Data interaktif penuh tersedia di Query Builder BPS
+        </p>
+        <p style="font-size:.8rem;color:var(--gray600);margin-top:6px">
+          Tabel di atas sudah menampilkan data aktual. Untuk memilih <strong>tahun</strong> tertentu atau
+          membandingkan <strong>antar wilayah/kecamatan</strong>, gunakan Query Builder BPS resmi.
+        </p>
+        <p style="font-size:.78rem;color:var(--gray400);margin-top:8px">
+          Sumber: <a href="https://jenepontokab.bps.go.id/id/query-builder" target="_blank" style="color:var(--blue)">jenepontokab.bps.go.id/id/query-builder</a>
+        </p>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p><strong style="color:var(--white)">BPS Kabupaten Jeneponto</strong></p>
+  <p>Data bersumber dari <a href="https://jenepontokab.bps.go.id/id/query-builder" target="_blank">jenepontokab.bps.go.id</a></p>
+  <p style="margin-top:6px;opacity:.4">Hak Cipta © 2026 BPS Kabupaten Jeneponto</p>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let allData = [], filtered = [], makro = [];
+
+// ── Boot ───────────────────────────────────────────────────────
+(async () => {
+  const [r, rm] = await Promise.all([
+    fetch('/api/tabel-dinamis'),
+    fetch('/api/tabel-makro')
+  ]);
+  const j  = await r.json();
+  allData = j.indikator || [];
+  const jm = await rm.json();
+  makro   = jm.tabel || [];
+
+  // Stats
+  document.getElementById('stTotal').textContent = j.total;
+  const kats = [...new Set(allData.map(v=>v.kategori).filter(Boolean))];
+  document.getElementById('stKat').textContent = kats.length;
+  if (j.diambilPada) {
+    document.getElementById('lastUpdate').textContent =
+      'Diperbarui: ' + new Date(j.diambilPada).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'});
+  }
+
+  // Fill dropdowns
+  const katSel  = document.getElementById('filterKat');
+  const subjSel = document.getElementById('filterSubjek');
+  kats.sort().forEach(k => {
+    const o = document.createElement('option'); o.value=k; o.textContent=k; katSel.appendChild(o);
+  });
+  const subjs = [...new Set(allData.map(v=>v.subjek).filter(Boolean))].sort();
+  subjs.forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s; subjSel.appendChild(o);
+  });
+
+  renderMakro();
+  document.getElementById('heroHint').textContent = `${j.total} tabel tersedia — ketik untuk mencari`;
+  applyFilter();
+  document.getElementById('skeletons').style.display = 'none';
+  document.getElementById('tblGrid').style.display = 'grid';
+})();
+
+// ── Render Data Makro ──────────────────────────────────────────
+function renderMakro() {
+  const wrap = document.getElementById('makroGrid');
+  if (!makro.length) { wrap.innerHTML = '<div class="empty" style="padding:24px">Belum ada data makro.</div>'; return; }
+  wrap.innerHTML = makro.map(t => {
+    const p = t.rows[0];
+    const preview = t.rows.slice(0,4).map(r =>
+      `<div class="mc-row"><span>${esc(r.label)}</span>${esc(r.nilai[t.years.length-1] ?? '–')}</div>`).join('');
+    return `
+      <div class="makro-card" onclick="bukaMakro('${esc(t.nama)}')">
+        <h4>${esc(t.nama)}</h4>
+        <p>${t.rows.length} indikator · tahun ${esc(t.years[0])}–${esc(t.years[t.years.length-1])}</p>
+        <div>${preview}</div>
+      </div>`;
+  }).join('');
+}
+
+function bukaMakro(nama) {
+  const t = makro.find(x => x.nama === nama);
+  if (!t) return;
+  document.getElementById('modalTitle').textContent = t.nama;
+  document.getElementById('modalMeta').textContent  = `Data Statistik Makro · ${t.rows.length} indikator · ${t.years[0]}–${t.years[t.years.length-1]}`;
+  document.getElementById('modalInfo').innerHTML =
+    `<strong style="color:var(--navy)">Tabel Statistik Makro Kabupaten Jeneponto</strong><br>
+     <span style="font-size:.8rem;color:var(--gray500)">Sumber: Executive Summary Indikator Makro BPS</span>`;
+  document.getElementById('guideArea').style.display = 'none';
+  document.getElementById('dataArea').innerHTML = renderDataTable(t);
+  document.getElementById('modalBg').classList.add('show');
+  document.getElementById('btnBPS').href = 'https://jenepontokab.bps.go.id/id/query-builder';
+  document.getElementById('btnExcel').style.display = '';
+  document.getElementById('btnExcel').href =
+    '/api/tabel-makro/' + encodeURIComponent(t.nama) + '/export';
+}
+
+function renderDataTable(t) {
+  let h = `<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Indikator</th>`;
+  t.years.forEach(y => h += `<th class="y">${esc(y)}</th>`);
+  h += `</tr></thead><tbody>`;
+  t.rows.forEach(r => {
+    const sat = r.satuan ? ` <span class="sat">(${esc(r.satuan)})</span>` : '';
+    h += `<tr><td class="ind">${esc(r.label)}${sat}</td>`;
+    r.nilai.forEach(v => {
+      const val = (v ?? '').toString().trim();
+      if (!val) { h += `<td class="y empty">–</td>`; return; }
+      if (/^\d+$/.test(val)) h += `<td class="y">${esc(Number(val).toLocaleString('id-ID'))}</td>`;
+      else h += `<td class="y">${esc(val)}</td>`;
+    });
+    h += `</tr>`;
+  });
+  h += `</tbody></table></div>`;
+  const kets = t.rows.map(r=>r.ket).filter(Boolean);
+  if (kets.length) {
+    const uniq = [...new Set(kets)];
+    h += `<div class="ket-badge">Catatan: ${uniq.map(esc).join(' · ')}</div>`;
+  }
+  return h;
+}
+
+// ── Search ─────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilter, 180);
+});
+
+// ── Filter & Render ────────────────────────────────────────────
+function applyFilter() {
+  const q    = document.getElementById('searchInput').value.toLowerCase().trim();
+  const kat  = document.getElementById('filterKat').value;
+  const subj = document.getElementById('filterSubjek').value;
+
+  filtered = allData.filter(v =>
+    (!q    || v.judul?.toLowerCase().includes(q) || v.subjek?.toLowerCase().includes(q) || v.kategori?.toLowerCase().includes(q) || v.definisi?.toLowerCase().includes(q)) &&
+    (!kat  || v.kategori === kat) &&
+    (!subj || v.subjek   === subj)
+  );
+
+  document.getElementById('resultInfo').innerHTML =
+    `Menampilkan <strong>${filtered.length}</strong> dari <strong>${allData.length}</strong> tabel`;
+  document.getElementById('heroHint').textContent =
+    q ? `${filtered.length} tabel cocok untuk "${q}"` : `${allData.length} tabel tersedia`;
+
+  const grid  = document.getElementById('tblGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    grid.innerHTML=''; grid.style.display='none'; empty.style.display='block';
+    document.getElementById('emptyMsg').textContent = q ? `Tidak ada tabel untuk "${q}".` : 'Tidak ada tabel.';
+    return;
+  }
+  empty.style.display = 'none'; grid.style.display = 'grid';
+
+  grid.innerHTML = filtered.map((v, i) => `
+  <div class="tbl-card" onclick="bukaModal(${v.var_id})" style="animation-delay:${(i%12)*.02}s">
+    <div class="tbl-card-top">
+      <span class="var-id">#${v.var_id}</span>
+      <span class="tbl-kat ${katClass(v.kategori)}">${esc(v.kategori||'Lainnya')}</span>
+    </div>
+    <div class="tbl-title">${esc(v.judul)}</div>
+    <div class="tbl-subjek">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      ${esc(v.subjek||'–')}
+    </div>
+    ${v.definisi ? `<div class="tbl-def">${esc(v.definisi)}</div>` : ''}
+    <div class="tbl-preview" id="pv-${v.var_id}" data-var="${v.var_id}">
+      <div class="pv-loading"><span class="spinner"></span> Memuat data preview…</div>
+    </div>
+    <div class="tbl-foot">
+      <span style="font-size:.73rem;color:var(--gray400)">Klik untuk detail lengkap</span>
+      <a href="/api/tabel-dinamis/data/${v.var_id}/export" download class="mini-excel" onclick="event.stopPropagation()" title="Unduh Excel">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="lbl-sv">Excel</span>
+      </a>
+    </div>
+  </div>`).join('');
+
+  // Muat preview data untuk tiap kartu
+  filtered.forEach(v => muatPreview(v.var_id));
+}
+
+async function muatPreview(varId) {
+  const el = document.getElementById('pv-' + varId);
+  if (!el || el.dataset.done) return;
+  el.dataset.done = '1';
+  try {
+    const r = await fetch(`/api/tabel-dinamis/data/${varId}`);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'gagal');
+    const c = j.data && j.data.datacontent;
+    if (c && c.length) {
+      const t = c[0];
+      const last = t.years[t.years.length - 1];
+      const rows = t.rows.slice(0, 3);
+      el.innerHTML = `
+        <div class="pv-title"><span>${esc(t.nama)}</span><span style="font-weight:500;color:var(--gray400)">${esc(t.years[0])}–${esc(last)}</span></div>
+        <table><thead><tr><th>Indikator</th>${t.years.slice(-3).map(y=>`<th>${esc(y)}</th>`).join('')}</tr></thead><tbody>
+        ${rows.map(r=>`<tr><td>${esc(r.label)}</td>${t.years.slice(-3).map(y=>{const idx=t.years.indexOf(y);const v=(r.nilai[idx]??'').toString().trim();return `<td>${v?esc(v):'–'}</td>`}).join('')}</tr>`).join('')}
+        </tbody></table>`;
+    } else {
+      el.innerHTML = `<div class="pv-err">Klik untuk membuka tabel &amp; detail data.</div>`;
+    }
+  } catch {
+    el.innerHTML = `<div class="pv-err">Klik untuk membuka tabel &amp; detail data.</div>`;
+  }
+}
+
+// ── Modal ──────────────────────────────────────────────────────
+function bukaModal(varId) {
+  const v = allData.find(x => x.var_id === varId);
+  if (!v) return;
+
+  document.getElementById('modalTitle').textContent = v.judul;
+  document.getElementById('modalMeta').textContent  = `${v.kategori} · ${v.subjek} · var_id: ${v.var_id}`;
+
+  // Bersihkan definisi dari tag HTML
+  function bersihHTML(s) { return (s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
+
+  let info = `
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:start">
+      <span style="font-weight:700;color:var(--navy)">Subjek</span>
+      <span>${esc(v.subjek||'–')}</span>
+      <span style="font-weight:700;color:var(--navy)">Kategori</span>
+      <span>${esc(v.kategori||'–')}</span>
+      <span style="font-weight:700;color:var(--navy)">var_id</span>
+      <span>${v.var_id}</span>
+    </div>`;
+
+  const def = bersihHTML(v.definisi);
+  const cat = bersihHTML(v.catatan);
+  if (def && def !== '-') info += `<div style="margin-top:12px"><strong style="color:var(--navy)">Definisi:</strong><br><span style="font-size:.82rem;color:var(--gray600);line-height:1.6">${esc(def)}</span></div>`;
+  if (cat && cat !== '-') info += `<div style="margin-top:8px"><strong style="color:var(--navy)">Catatan:</strong><br><span style="font-size:.82rem;color:var(--gray500);line-height:1.6">${esc(cat)}</span></div>`;
+
+  document.getElementById('modalInfo').innerHTML = info;
+  document.getElementById('guideArea').style.display = 'block';
+  document.getElementById('dataArea').innerHTML =
+    `<div style="display:flex;align-items:center;gap:10px;color:var(--gray500);font-size:.83rem;padding:14px 0">
+       <span class="spinner"></span> Memuat data tabel…</div>`;
+  document.getElementById('modalBg').classList.add('show');
+  document.getElementById('btnBPS').href = v.url_bps || 'https://jenepontokab.bps.go.id/id/query-builder';
+  document.getElementById('btnExcel').style.display = '';
+  document.getElementById('btnExcel').href = '/api/tabel-dinamis/data/' + v.var_id + '/export';
+
+  // Ambil data aktual (tabular) jika memungkinkan
+  fetch(`/api/tabel-dinamis/data/${varId}`)
+    .then(r => r.json())
+    .then(j => {
+      if (!j.ok) throw new Error(j.error || 'gagal');
+      const darea = document.getElementById('dataArea');
+      const rows = tabelDariData(j.data || j);
+      if (rows) darea.innerHTML = rows;
+      else darea.innerHTML =
+        `<div style="background:var(--gray50);border-radius:8px;padding:14px 16px;font-size:.8rem;color:var(--gray500)">
+           Data tabular belum tersedia untuk var_id ini secara langsung. Gunakan Query Builder BPS untuk mengaksesnya.
+         </div>`;
+    })
+    .catch(() => {
+      document.getElementById('dataArea').innerHTML =
+        `<div style="background:var(--gray50);border-radius:8px;padding:14px 16px;font-size:.8rem;color:var(--gray500)">
+           Data interaktif penuh tersedia di Query Builder BPS (klik tombol di atas).
+         </div>`;
+    });
+}
+
+// Coba ekstrak tabel dari respons raw data Query Builder
+function tabelDariData(d) {
+  if (!d) return null;
+  // Cek struktur datacontent
+  let dc = d.datacontent;
+  if (!dc && d.data) dc = d.data.datacontent;
+  if (Array.isArray(dc) && dc.length) {
+    // Struktur tabel makro: elemen punya {nama, years, rows}
+    const first = dc[0];
+    if (first && first.years && Array.isArray(first.rows)) {
+      const t = first;
+      let h = `<div class="pv-title" style="font-size:.72rem;font-weight:700;color:var(--navy);padding:6px 10px;background:var(--gray100);border:1px solid var(--gray200);border-bottom:none;border-radius:7px 7px 0 0"><span>${esc(t.nama)}</span><span style="float:right;font-weight:500;color:var(--gray500)">${esc(t.years[0])}–${esc(t.years[t.years.length-1])}</span></div>`;
+      h += `<div class="dtable-wrap" style="margin-top:0;border-radius:0 0 8px 8px"><table class="dtable"><thead><tr><th>Indikator</th>`;
+      t.years.forEach(y => h += `<th class="y">${esc(y)}</th>`);
+      h += `</tr></thead><tbody>`;
+      t.rows.forEach(r => {
+        const sat = r.satuan ? ` <span class="sat">(${esc(r.satuan)})</span>` : '';
+        h += `<tr><td class="ind">${esc(r.label)}${sat}</td>`;
+        r.nilai.forEach(v => {
+          const val = (v ?? '').toString().trim();
+          if (!val) { h += `<td class="y empty">–</td>`; return; }
+          if (/^-?\d+$/.test(val)) h += `<td class="y">${esc(Number(val).toLocaleString('id-ID'))}</td>`;
+          else h += `<td class="y">${esc(val)}</td>`;
+        });
+        h += `</tr>`;
+      });
+      h += `</tbody></table></div>`;
+      return h;
+    }
+    // Struktur baris datacontent biasa
+    return `
+    <div class="dtable-wrap"><table class="dtable"><thead><tr>
+      ${Object.keys(dc[0]).map(k=>`<th>${esc(k)}</th>`).join('')}
+    </tr></thead><tbody>
+      ${dc.map(row=>`<tr>${Object.values(row).map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  return null;
+}
+
+function tutupModal() {
+  document.getElementById('modalBg').classList.remove('show');
+}
+
+// Ekspor semua tabel makro ke satu file Excel (klien mengunduh dari endpoint agregat)
+function exportAll() {
+  window.location.href = '/api/tabel-makro/export-all';
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+const KAT_CLASS = {
+  'Indeks Pembangunan Manusia'     : 'kat-ipm',
+  'Kependudukan dan Migrasi'       : 'kat-kpdk',
+  'Produk Domestik Regional Bruto' : 'kat-pdrb',
+  'PDRB'                           : 'kat-pdrb',
+};
+function katClass(k) {
+  for (const [key, cls] of Object.entries(KAT_CLASS)) {
+    if (k?.includes(key)) return cls;
+  }
+  return 'kat-lain';
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast show'+(type?' '+type:'');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

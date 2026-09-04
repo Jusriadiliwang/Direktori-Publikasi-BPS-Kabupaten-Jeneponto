@@ -1,0 +1,14 @@
+[
+  {"kecamatan":"Bangkala",      "penduduk":54173, "laki":26894, "perempuan":27279, "kk":13792, "luas_km2":113.83},
+  {"kecamatan":"Bangkala Barat","penduduk":27001, "laki":13285, "perempuan":13716, "kk":6902,  "luas_km2":152.96},
+  {"kecamatan":"Tamalatea",     "penduduk":50398, "laki":24701, "perempuan":25697, "kk":12837, "luas_km2":57.58},
+  {"kecamatan":"Bontoramba",    "penduduk":36215, "laki":17766, "perempuan":18449, "kk":9263,  "luas_km2":88.30},
+  {"kecamatan":"Binamu",        "penduduk":65147, "laki":32118, "perempuan":33029, "kk":17042, "luas_km2":69.49},
+  {"kecamatan":"Turatea",       "penduduk":31442, "laki":15351, "perempuan":16091, "kk":8066,  "luas_km2":53.76},
+  {"kecamatan":"Batang",        "penduduk":24563, "laki":11987, "perempuan":12576, "kk":6306,  "luas_km2":50.58},
+  {"kecamatan":"Arungkeke",     "penduduk":22017, "laki":10715, "perempuan":11302, "kk":5620,  "luas_km2":29.74},
+  {"kecamatan":"Tarowang",      "penduduk":21436, "laki":10417, "perempuan":11019, "kk":5600,  "luas_km2":40.68},
+  {"kecamatan":"Kelara",        "penduduk":36851, "laki":18027, "perempuan":18824, "kk":9397,  "luas_km2":67.23},
+  {"kecamatan":"Rumbia",        "penduduk":49723, "laki":24327, "perempuan":25396, "kk":12662, "luas_km2":135.93},
+  {"kecamatan":"TOTAL",         "penduduk":418966,"laki":205588,"perempuan":213378,"kk":106487,"luas_km2":749.79}
+]

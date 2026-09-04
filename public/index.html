@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direktori Publikasi – BPS Kabupaten Jeneponto</title>
+<style>
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d2137;--navy2:#132d4f;--blue:#1a5fb4;--blue2:#2980d4;
+  --accent:#f59e0b;--green:#10b981;--white:#fff;--gray50:#f8fafc;
+  --gray100:#f1f5f9;--gray200:#e2e8f0;--gray400:#94a3b8;
+  --gray600:#475569;--gray800:#1e293b;--text:#0f172a;
+  --r:12px;--sh:0 4px 20px rgba(0,0,0,.10);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray50);color:var(--text);min-height:100vh}
+
+/* ── NAVBAR ── */
+nav{position:sticky;top:0;z-index:200;background:var(--navy);box-shadow:0 2px 20px rgba(0,0,0,.4)}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:16px;height:64px}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;flex-shrink:0}
+.nav-logo-box{width:44px;height:44px;background:var(--white);border-radius:8px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;padding:4px;gap:2px}
+.nav-logo-box span{border-radius:2px}
+.nav-logo-box .b1{background:#1565c0}.nav-logo-box .b2{background:#ff6f00}
+.nav-logo-box .b3{background:#2e7d32}.nav-logo-box .b4{background:#c62828}
+.nav-title{color:var(--white);line-height:1.2}
+.nav-title strong{font-size:.95rem;font-weight:800;display:block;letter-spacing:.2px}
+.nav-title small{font-size:.72rem;opacity:.75}
+.nav-spacer{flex:1}
+.nav-link{color:rgba(255,255,255,.8);text-decoration:none;font-size:.84rem;font-weight:500;padding:8px 12px;border-radius:6px;transition:.2s;white-space:nowrap}
+.nav-link:hover{color:var(--white);background:rgba(255,255,255,.1)}
+.nav-admin{color:var(--white);background:var(--blue);text-decoration:none;font-size:.83rem;font-weight:600;padding:8px 16px;border-radius:7px;transition:.2s;display:flex;align-items:center;gap:6px}
+.nav-admin:hover{background:var(--blue2)}
+
+/* ── HERO ── */
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#061429 0%,#0d2a52 40%,#0f3872 70%,#1a5099 100%);min-height:340px;display:flex;align-items:center;justify-content:center}
+.hero-dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+.hero-glow{position:absolute;top:-80px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(41,128,212,.25) 0%,transparent 70%);pointer-events:none}
+.hero-glow2{position:absolute;bottom:-100px;left:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(245,158,11,.12) 0%,transparent 70%);pointer-events:none}
+.hero-content{position:relative;z-index:2;text-align:center;padding:60px 20px 70px;max-width:760px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:99px;margin-bottom:20px;letter-spacing:.5px;text-transform:uppercase}
+.hero-badge span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+.hero h1{color:var(--white);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.25;margin-bottom:12px}
+.hero h1 span{color:var(--accent)}
+.hero p{color:rgba(255,255,255,.7);font-size:.95rem;margin-bottom:32px;line-height:1.6}
+
+/* Search Box */
+.search-wrap{position:relative;max-width:660px;margin:0 auto}
+.search-box{width:100%;padding:16px 56px 16px 22px;border-radius:14px;border:2px solid transparent;font-size:1rem;background:rgba(255,255,255,.97);color:var(--text);outline:none;box-shadow:0 8px 40px rgba(0,0,0,.3);transition:.3s}
+.search-box:focus{border-color:var(--accent);box-shadow:0 8px 40px rgba(0,0,0,.3),0 0 0 4px rgba(245,158,11,.2)}
+.search-box::placeholder{color:var(--gray400)}
+.search-icon{position:absolute;right:18px;top:16px;color:var(--blue);pointer-events:none}
+.search-hint{margin-top:12px;color:rgba(255,255,255,.5);font-size:.78rem}
+
+/* Search Dropdown */
+.search-dropdown{
+  position:absolute;top:calc(100% + 8px);left:0;right:0;
+  background:var(--white);border-radius:14px;
+  box-shadow:0 16px 50px rgba(0,0,0,.25);
+  border:1px solid var(--gray200);
+  max-height:520px;overflow-y:auto;z-index:500;
+  display:none;
+}
+.search-dropdown.show{display:block}
+.sd-section{padding:12px 16px 0}
+.sd-section-title{
+  font-size:.7rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--gray400);
+  display:flex;align-items:center;gap:6px;
+  padding-bottom:8px;border-bottom:1px solid var(--gray100);margin-bottom:2px;
+}
+.sd-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 8px;border-radius:9px;cursor:pointer;
+  text-decoration:none;transition:.15s;
+  border-bottom:1px solid var(--gray100);
+}
+.sd-item:last-child{border-bottom:none}
+.sd-item:hover{background:var(--gray50)}
+.sd-icon{
+  width:34px;height:34px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.sd-icon.stat{background:rgba(26,95,180,.1)}
+.sd-icon.pub{background:rgba(16,185,129,.1)}
+.sd-icon.tbl{background:rgba(139,92,246,.1)}
+.sd-body{flex:1;min-width:0}
+.sd-nama{font-size:.88rem;font-weight:600;color:var(--text);line-height:1.3}
+.sd-nilai{
+  font-size:1.15rem;font-weight:800;color:var(--blue);
+  margin:3px 0 2px;line-height:1.2;
+}
+.sd-satuan{font-size:.75rem;color:var(--gray400);font-weight:500}
+.sd-sumber{
+  font-size:.73rem;color:var(--gray500);
+  display:flex;align-items:center;gap:4px;margin-top:4px;
+  flex-wrap:wrap;
+}
+.sd-sumber a{color:var(--blue);text-decoration:none;font-weight:600}
+.sd-sumber a:hover{text-decoration:underline}
+.sd-meta{font-size:.78rem;color:var(--gray400);margin-top:2px}
+.sd-empty{padding:20px;text-align:center;color:var(--gray400);font-size:.86rem}
+.sd-footer{padding:10px 16px;border-top:1px solid var(--gray100);text-align:center}
+.sd-footer a{font-size:.78rem;color:var(--blue);text-decoration:none;font-weight:600}
+.sd-footer a:hover{text-decoration:underline}
+.sd-loading{padding:20px;text-align:center;color:var(--gray400);font-size:.86rem;display:flex;align-items:center;justify-content:center;gap:8px}
+.sd-spin{width:16px;height:16px;border:2px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Wave */
+.wave-sep{display:block;background:var(--gray50);line-height:0}
+.wave-sep svg{display:block}
+
+/* ── STATS BAR ── */
+.stats-bar{background:var(--white);border-bottom:1px solid var(--gray200);padding:14px 20px}
+.stats-inner{max-width:1280px;margin:0 auto;display:flex;gap:32px;flex-wrap:wrap;align-items:center}
+.stat-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--gray600)}
+.stat-num{font-size:1.1rem;font-weight:800;color:var(--blue)}
+.stat-sep{color:var(--gray200);font-size:1.2rem}
+
+/* ── MAIN LAYOUT ── */
+.main-container{max-width:1280px;margin:0 auto;padding:28px 20px 80px}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:24px}
+.filter-label{font-size:.78rem;font-weight:700;color:var(--gray600);text-transform:uppercase;letter-spacing:.4px;margin-right:4px}
+.filter-select{padding:7px 12px;border:1.5px solid var(--gray200);border-radius:8px;font-size:.85rem;color:var(--gray800);background:var(--white);cursor:pointer;outline:none;transition:.2s}
+.filter-select:focus{border-color:var(--blue)}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:6px 14px;border-radius:99px;border:1.5px solid var(--gray200);background:var(--white);font-size:.8rem;font-weight:600;color:var(--gray600);cursor:pointer;transition:.2s}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active{border-color:var(--blue);background:var(--blue);color:var(--white)}
+.filter-clear{margin-left:auto;font-size:.8rem;color:var(--gray400);cursor:pointer;text-decoration:underline}
+.filter-clear:hover{color:var(--blue)}
+
+/* ── RESULT INFO ── */
+.result-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.result-count{font-size:.87rem;color:var(--gray600)}
+.result-count strong{color:var(--blue);font-weight:700}
+.view-toggle{display:flex;gap:4px}
+.vtoggle{width:32px;height:32px;border:1.5px solid var(--gray200);border-radius:6px;background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray400);transition:.2s}
+.vtoggle.active{border-color:var(--blue);background:var(--blue);color:var(--white)}
+
+/* ── GRID ── */
+.pub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.pub-grid.list-mode{grid-template-columns:1fr}
+
+/* ── CARD ── */
+.pub-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.pub-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.15)}
+
+.card-cover{position:relative;padding-top:62%;overflow:hidden;background:linear-gradient(135deg,var(--navy),var(--blue))}
+.card-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.pub-card:hover .card-cover img{transform:scale(1.04)}
+.card-cover-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;opacity:.3}
+.card-kat{position:absolute;top:10px;left:10px;padding:4px 10px;border-radius:99px;font-size:.68rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;backdrop-filter:blur(8px)}
+
+.card-body{padding:16px;flex:1;display:flex;flex-direction:column}
+.card-date{font-size:.73rem;color:var(--gray400);display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.card-title{font-size:.93rem;font-weight:700;color:var(--gray800);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+.card-desc{font-size:.78rem;color:var(--gray600);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px}
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--gray100)}
+.card-year{font-size:.72rem;font-weight:700;color:var(--gray400)}
+.card-btn{font-size:.73rem;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:4px}
+.card-btn svg{transition:transform .2s}
+.pub-card:hover .card-btn svg{transform:translateX(3px)}
+
+/* List mode card */
+.pub-grid.list-mode .pub-card{flex-direction:row;height:120px}
+.pub-grid.list-mode .card-cover{padding-top:0;width:100px;flex-shrink:0}
+.pub-grid.list-mode .card-body{padding:12px 16px}
+.pub-grid.list-mode .card-desc{display:none}
+
+/* ── Kategori badge colors ── */
+.kat-dna{background:rgba(37,99,235,.15);color:#1d4ed8}
+.kat-sd{background:rgba(14,165,233,.15);color:#0369a1}
+.kat-pdrb{background:rgba(139,92,246,.15);color:#7c3aed}
+.kat-ipm{background:rgba(16,185,129,.15);color:#047857}
+.kat-kms{background:rgba(245,158,11,.15);color:#b45309}
+.kat-ktk{background:rgba(99,102,241,.15);color:#4338ca}
+.kat-ptr{background:rgba(5,150,105,.15);color:#065f46}
+.kat-ksj{background:rgba(236,72,153,.15);color:#9d174d}
+.kat-kec{background:rgba(6,182,212,.15);color:#0e7490}
+.kat-hi{background:rgba(239,68,68,.15);color:#b91c1c}
+.kat-pd{background:rgba(132,204,22,.15);color:#3f6212}
+.kat-lain{background:rgba(100,116,139,.15);color:#374151}
+
+/* ── Loader / Empty ── */
+.loader-wrap{display:none;flex-direction:column;align-items:center;padding:60px;gap:14px;color:var(--gray400)}
+.loader-wrap.active{display:flex}
+.spin{width:40px;height:40px;border:4px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{display:none;text-align:center;padding:60px 20px}
+.empty.visible{display:block}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+.empty p{color:var(--gray400);font-size:.95rem}
+
+/* ── Pagination ── */
+.pager{display:flex;justify-content:center;gap:6px;margin-top:32px;flex-wrap:wrap}
+.page-btn{width:38px;height:38px;border:1.5px solid var(--gray200);background:var(--white);border-radius:8px;font-size:.85rem;font-weight:600;color:var(--gray600);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.page-btn:hover{border-color:var(--blue);color:var(--blue)}
+.page-btn.active{border-color:var(--blue);background:var(--blue);color:var(--white)}
+.page-btn:disabled{opacity:.4;cursor:default}
+
+/* ── FOOTER ── */
+footer{background:var(--navy);color:rgba(255,255,255,.7);text-align:center;padding:28px 20px;font-size:.82rem;line-height:1.7}
+footer a{color:rgba(255,255,255,.5);text-decoration:none}
+footer a:hover{color:var(--white)}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <img src="/assets/logo-bps.png" alt="BPS" style="width:46px;height:46px;object-fit:contain;background:white;border-radius:8px;padding:3px"/>
+      <div class="nav-title">
+        <strong>BADAN PUSAT STATISTIK</strong>
+        <small>Kabupaten Jeneponto</small>
+      </div>
+    </a>
+    <div class="nav-spacer"></div>
+    <a class="nav-link" href="/chat.html">Chat</a><a class="nav-link" href="/indikator.html">Indikator Makro</a>
+    <a class="nav-link" href="/tabel.html">Tabel Dinamis</a>
+    <a class="nav-admin" href="/admin/">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+      Admin
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-dots"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span></span>Direktori Resmi Publikasi BPS</div>
+    <h1>Direktori Publikasi<br><span>BPS Kabupaten Jeneponto</span></h1>
+    <p>Cari data statistik, nilai indikator, dan publikasi BPS Kabupaten Jeneponto</p>
+    <div class="search-wrap">
+      <input class="search-box" id="searchInput" type="text"
+        placeholder="Cari judul publikasi, kata kunci, kategori..."
+        autocomplete="off" />
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <!-- Dropdown hasil pencarian -->
+      <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+    <p class="search-hint" id="searchHint">Cari "jumlah penduduk", "IPM", "PDRB", "kemiskinan"…</p>
+  </div>
+</section>
+
+<!-- Wave -->
+<div class="wave-sep">
+  <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" width="100%" height="60">
+    <path fill="#0d2137" d="M0,30 C360,60 1080,0 1440,30 L1440,0 L0,0 Z"/>
+  </svg>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <span class="stat-num" id="stTotal">–</span>
+      <span>Total Publikasi</span>
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item">
+      <span class="stat-num" id="stKat">–</span>
+      <span>Kategori</span>
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item">
+      <span class="stat-num" id="stTahun">–</span>
+      <span>Tahun Data</span>
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="stUpdate">Memuat…</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Tahun:</span>
+    <select class="filter-select" id="filterTahun">
+      <option value="">Semua</option>
+    </select>
+    <span class="filter-label" style="margin-left:8px">Kategori:</span>
+    <div class="filter-pills" id="katPills"></div>
+    <span class="filter-clear" id="btnClear" onclick="clearFilter()">Hapus Filter</span>
+  </div>
+
+  <!-- Result Info -->
+  <div class="result-info">
+    <div class="result-count" id="resultCount">Memuat data…</div>
+    <div class="view-toggle">
+      <button class="vtoggle active" id="vGrid" title="Grid" onclick="setView('grid')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+      </button>
+      <button class="vtoggle" id="vList" title="List" onclick="setView('list')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader-wrap" id="loader"><div class="spin"></div><p>Memuat data publikasi…</p></div>
+
+  <!-- Empty -->
+  <div class="empty" id="emptyState">
+    <div class="empty-icon">&#x1F50D;</div>
+    <p id="emptyMsg">Tidak ada publikasi yang ditemukan.</p>
+  </div>
+
+  <!-- Grid -->
+  <div class="pub-grid" id="pubGrid"></div>
+
+  <!-- Pagination -->
+  <div class="pager" id="pager"></div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong style="color:var(--white)">BPS Kabupaten Jeneponto</strong></p>
+  <p>Jl. Sultan Hasanuddin No. 58, Jeneponto, Sulawesi Selatan 92311</p>
+  <p style="margin-top:8px">
+    <a href="https://jenepontokab.bps.go.id" target="_blank">jenepontokab.bps.go.id</a>
+    &nbsp;·&nbsp;
+    <a href="/admin/">Panel Admin</a>
+  </p>
+  <p style="margin-top:8px;opacity:.4">Hak Cipta © 2026 BPS Kabupaten Jeneponto</p>
+</footer>
+
+<!-- ── MODAL DETAIL PUBLIKASI ── -->
+<div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.35)">
+    <!-- Head -->
+    <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+      <span style="font-size:.85rem;font-weight:700;color:#0d2137" id="dm-kat-badge"></span>
+      <button onclick="document.getElementById('detailModal').style.display='none'" style="width:28px;height:28px;border:none;background:#f1f5f9;border-radius:6px;cursor:pointer;font-size:1rem;color:#64748b">×</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:20px">
+      <div style="text-align:center;margin-bottom:16px" id="dm-cover-wrap"></div>
+      <h2 style="font-size:1.05rem;font-weight:800;color:#0d2137;line-height:1.4;margin-bottom:8px" id="dm-title"></h2>
+      <div style="display:flex;gap:16px;font-size:.78rem;color:#64748b;margin-bottom:14px;flex-wrap:wrap" id="dm-meta"></div>
+      <div style="font-size:.86rem;color:#475569;line-height:1.7;margin-bottom:18px;background:#f8fafc;border-radius:8px;padding:12px 14px" id="dm-desc"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:14px;border-top:1px solid #f1f5f9" id="dm-actions"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Konstanta ──────────────────────────────────────────────────
+const LIMIT = 12;
+const KAT_MAP = {
+  'Dalam Angka'    :['kat-dna' ,'#2563eb'],
+  'Statistik Daerah':['kat-sd' ,'#0284c7'],
+  'PDRB'           :['kat-pdrb','#7c3aed'],
+  'IPM'            :['kat-ipm' ,'#047857'],
+  'Kemiskinan'     :['kat-kms' ,'#b45309'],
+  'Ketenagakerjaan':['kat-ktk' ,'#4338ca'],
+  'Pertanian'      :['kat-ptr' ,'#065f46'],
+  'Kesejahteraan'  :['kat-ksj' ,'#9d174d'],
+  'Kecamatan'      :['kat-kec' ,'#0e7490'],
+  'Harga & Inflasi':['kat-hi'  ,'#b91c1c'],
+  'Potensi Desa'   :['kat-pd'  ,'#3f6212'],
+  'Lainnya'        :['kat-lain','#374151'],
+};
+
+// ── State ──────────────────────────────────────────────────────
+let allData    = [];
+let filtered   = [];
+let curPage    = 1;
+let curView    = 'grid';
+let curTahun   = '';
+let curKat     = '';
+let searchQ    = '';
+let pubDetailMap = new Map();
+let searchTimer;
+
+// ── Init ───────────────────────────────────────────────────────
+(async () => {
+  document.getElementById('loader').classList.add('active');
+  try {
+    // Muat semua data sekaligus
+    const r = await fetch('/api/publikasi?limit=9999');
+    const j = await r.json();
+    allData = j.data;
+
+    // Stats
+    const sr = await fetch('/api/stats');
+    const sj = await sr.json();
+    document.getElementById('stTotal').textContent  = sj.total.toLocaleString('id');
+    document.getElementById('stKat').textContent    = sj.totalKategori;
+    document.getElementById('stTahun').textContent  = `${sj.tahunMin}–${sj.tahunMax}`;
+    document.getElementById('stUpdate').textContent = `Data mencakup ${sj.totalTahun} tahun`;
+
+    // Filter tahun
+    const tahunSet = [...new Set(allData.map(p=>p.tahun).filter(Boolean))].sort((a,b)=>b-a);
+    const selThn = document.getElementById('filterTahun');
+    tahunSet.forEach(t=>{
+      const o=document.createElement('option'); o.value=t; o.textContent=t; selThn.appendChild(o);
+    });
+
+    // Kategori pills
+    const katList = Object.keys(KAT_MAP);
+    const pillWrap = document.getElementById('katPills');
+    katList.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className='pill'; btn.dataset.kat=k; btn.textContent=k;
+      btn.onclick = () => filterKat(k, btn);
+      pillWrap.appendChild(btn);
+    });
+
+    apply();
+  } catch(e) {
+    document.getElementById('emptyMsg').textContent = 'Gagal memuat data: '+e.message;
+    document.getElementById('emptyState').classList.add('visible');
+  } finally {
+    document.getElementById('loader').classList.remove('active');
+  }
+})();
+
+// ── Search (filter publikasi) ──────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const val = e.target.value.trim();
+  searchQ = val.toLowerCase();
+  curPage = 1;
+  apply();
+  // Pencarian universal (dropdown)
+  if (val.length >= 2) {
+    searchTimer = setTimeout(() => cariUniversal(val), 300);
+  } else {
+    tutupDropdown();
+  }
+});
+
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) tutupDropdown();
+});
+
+// ── PENCARIAN UNIVERSAL (Dropdown) ─────────────────────────────
+let searchUnivTimer;
+async function cariUniversal(q) {
+  const dd = document.getElementById('searchDropdown');
+  dd.innerHTML = '<div class="sd-loading"><div class="sd-spin"></div>Mencari…</div>';
+  dd.classList.add('show');
+
+  try {
+    const r    = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await r.json();
+    renderDropdown(data);
+  } catch {
+    dd.innerHTML = '<div class="sd-empty">Gagal memuat hasil pencarian</div>';
+  }
+}
+
+function tutupDropdown() {
+  document.getElementById('searchDropdown').classList.remove('show');
+}
+
+function renderDropdown(data) {
+  const dd = document.getElementById('searchDropdown');
+  const { indikatorMakro, publikasi, tabelDinamis, kecamatan, pubKec, query } = data;
+
+  if (!indikatorMakro.length && !publikasi.length && !tabelDinamis.length && !(kecamatan||[]).length) {
+    dd.innerHTML = `<div class="sd-empty">Tidak ada hasil untuk "<strong>${esc(query)}</strong>"</div>`;
+    return;
+  }
+
+  let html = '';
+
+  // ── DATA KECAMATAN ──
+  if (kecamatan && kecamatan.length) {
+    html += `<div class="sd-section">
+      <div class="sd-section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Penduduk Per Kecamatan – Kabupaten Jeneponto
+      </div>`;
+
+    const showAll = kecamatan.length > 3;
+    const tampil  = showAll ? kecamatan.slice(0, 11) : kecamatan;
+
+    html += `<div style="padding:8px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+        <thead>
+          <tr style="background:#f1f5f9">
+            <th style="padding:7px 10px;text-align:left;font-weight:700;color:#475569">Kecamatan</th>
+            <th style="padding:7px 10px;text-align:right;font-weight:700;color:#475569">Penduduk</th>
+            <th style="padding:7px 10px;text-align:right;font-weight:700;color:#475569;display:${showAll?'table-cell':'none'}">Laki-laki</th>
+            <th style="padding:7px 10px;text-align:right;font-weight:700;color:#475569;display:${showAll?'table-cell':'none'}">Perempuan</th>
+            <th style="padding:7px 10px;text-align:right;font-weight:700;color:#475569">Luas (km²)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tampil.map((k,i) => `
+            <tr style="border-top:1px solid #f1f5f9;${i%2===1?'background:#fafafa':''}">
+              <td style="padding:6px 10px;font-weight:600;color:#0d2137">${esc(k.kecamatan)}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:700;color:#1a5fb4">${k.penduduk.toLocaleString('id')}</td>
+              <td style="padding:6px 10px;text-align:right;color:#475569;display:${showAll?'table-cell':'none'}">${k.laki.toLocaleString('id')}</td>
+              <td style="padding:6px 10px;text-align:right;color:#475569;display:${showAll?'table-cell':'none'}">${k.perempuan.toLocaleString('id')}</td>
+              <td style="padding:6px 10px;text-align:right;color:#64748b">${k.luas_km2}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+    const pubSumber = (pubKec||[]).length
+      ? `Sumber: <a href="${esc(pubKec[0].url||'#')}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:#1a5fb4">${esc((pubKec[0].judul||'').substring(0,40))}…</a>`
+      : `Sumber: <a href="https://jenepontokab.bps.go.id/id/publication" target="_blank" style="color:#1a5fb4">BPS Kabupaten Jeneponto</a>`;
+
+    html += `<div style="padding:6px 10px 12px;font-size:.72rem;color:#94a3b8;display:flex;align-items:center;gap:4px">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Data 2026 &nbsp;·&nbsp; ${pubSumber}
+    </div>`;
+    html += '</div>';
+  }
+
+  // ── DATA STATISTIK ──
+  if (indikatorMakro.length) {
+    html += `<div class="sd-section">
+
+
+      <div class="sd-section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Data Statistik Kabupaten Jeneponto
+      </div>`;
+
+    html += indikatorMakro.map(v => {
+      // Buat link sumber
+      let sumberTeks = '';
+      let sumberHref = '#';
+      if (v.sumber && v.sumber.judul) {
+        sumberTeks = v.sumber.judul.substring(0, 48) + (v.sumber.judul.length > 48 ? '…' : '');
+        sumberHref = v.sumber.url || '#';
+      } else {
+        sumberTeks = v.sumberExcel || 'Indikator Makro BPS';
+        sumberHref = v.sumberUrl  || 'https://s.bps.go.id/7304_indikatormakro';
+      }
+
+      return `
+      <div class="sd-item" onclick="pilihIndikator('${esc(v.nama)}')">
+        <div class="sd-icon stat">📊</div>
+        <div class="sd-body">
+          <div class="sd-nama">${esc(v.nama)}</div>
+          <div class="sd-nilai">${esc(v.nilai)}
+            <span class="sd-satuan">${esc(v.satuan)}</span>
+          </div>
+          <div class="sd-sumber">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Tahun ${esc(v.tahun)} &nbsp;·&nbsp;
+            Sumber: <a href="${esc(sumberHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(sumberTeks)}</a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    html += '</div>';
+  }
+
+  // ── PUBLIKASI ──
+  if (publikasi.length) {
+    html += `<div class="sd-section">
+      <div class="sd-section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Publikasi Terkait (${publikasi.length})
+      </div>`;
+    html += publikasi.map(p => `
+      <a class="sd-item" href="${esc(p.url||'#')}" target="_blank" rel="noopener">
+        <div class="sd-icon pub">📘</div>
+        <div class="sd-body">
+          <div class="sd-nama">${esc(p.judul)}</div>
+          <div class="sd-meta">${esc(p.tanggal||'')}${p.kategori?' · '+esc(p.kategori):''}</div>
+        </div>
+      </a>`).join('');
+    html += '</div>';
+  }
+
+  // ── TABEL DINAMIS ──
+  if (tabelDinamis.length) {
+    html += `<div class="sd-section">
+      <div class="sd-section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        Tabel Dinamis (${tabelDinamis.length})
+      </div>`;
+    html += tabelDinamis.map(v => `
+      <a class="sd-item" href="/tabel.html" target="_blank">
+        <div class="sd-icon tbl">📋</div>
+        <div class="sd-body">
+          <div class="sd-nama">${esc(v.judul)}</div>
+          <div class="sd-meta">${esc(v.subjek||'')}${v.kategori?' · '+esc(v.kategori):''}</div>
+        </div>
+      </a>`).join('');
+    html += '</div>';
+  }
+
+  // ── Footer ──
+  html += `<div class="sd-footer">
+    <a href="#" onclick="tutupDropdown();return false">Tutup</a>
+    &nbsp;·&nbsp;
+    <a href="/indikator.html" target="_blank">Lihat semua Indikator Makro →</a>
+  </div>`;
+
+  dd.innerHTML = html;
+}
+
+function pilihIndikator(nama) {
+  // Ketika klik item data statistik → arahkan ke halaman indikator makro
+  tutupDropdown();
+  window.open('/indikator.html', '_blank');
+}
+
+// ── Filter tahun ───────────────────────────────────────────────
+document.getElementById('filterTahun').addEventListener('change', e => {
+  curTahun = e.target.value; curPage=1; apply();
+});
+
+// ── Filter kategori ────────────────────────────────────────────
+function filterKat(kat, btn) {
+  if (curKat === kat) { curKat=''; btn.classList.remove('active'); }
+  else {
+    document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    curKat = kat; btn.classList.add('active');
+  }
+  curPage=1; apply();
+}
+
+// ── Clear ──────────────────────────────────────────────────────
+function clearFilter() {
+  curTahun=''; curKat=''; searchQ='';
+  document.getElementById('filterTahun').value='';
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('searchInput').value='';
+  curPage=1; apply();
+}
+
+// ── Apply filter & render ──────────────────────────────────────
+function apply() {
+  filtered = allData.filter(p => {
+    if (searchQ && !p.judul?.toLowerCase().includes(searchQ) && !p.deskripsi?.toLowerCase().includes(searchQ)) return false;
+    if (curTahun && String(p.tahun) !== curTahun) return false;
+    if (curKat   && p.kategori !== curKat) return false;
+    return true;
+  });
+
+  const total = filtered.length;
+  const label = searchQ || curTahun || curKat
+    ? `Menampilkan <strong>${total}</strong> dari <strong>${allData.length}</strong> publikasi`
+    : `Total <strong>${total}</strong> publikasi`;
+  document.getElementById('resultCount').innerHTML = label;
+  document.getElementById('searchHint').textContent =
+    searchQ ? `${total} hasil untuk "${searchQ}"` : 'Ketik untuk mencari secara langsung…';
+
+  renderPage();
+  renderPager();
+
+  document.getElementById('emptyState').classList.toggle('visible', total === 0);
+  document.getElementById('pubGrid').style.display = total === 0 ? 'none' : '';
+}
+
+// ── Render kartu ───────────────────────────────────────────────
+function renderPage() {
+  const start = (curPage-1)*LIMIT;
+  const items = filtered.slice(start, start+LIMIT);
+  const grid  = document.getElementById('pubGrid');
+  grid.className = 'pub-grid' + (curView==='list' ? ' list-mode' : '');
+
+  // Simpan map id→data untuk modal
+  items.forEach((p,i) => { pubDetailMap.set(String(start+i), p); });
+
+  grid.innerHTML = items.map((p,i) => {
+    const [katClass] = KAT_MAP[p.kategori] || KAT_MAP['Lainnya'];
+    const delay = (i % LIMIT) * 0.03;
+    const idx   = start + i;
+    const hasLocal = !!(p.fileLokal);
+    const coverHTML = cvr(p.cover)
+      ? `<img src="${esc(cvr(p.cover))}" alt="${esc(p.judul)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=card-cover-ph>📄</div>'">`
+      : `<div class="card-cover-ph">📄</div>`;
+    const badge = hasLocal
+      ? `<span style="position:absolute;bottom:8px;right:8px;background:rgba(16,185,129,.9);color:#fff;font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:99px">📥 Lokal</span>`
+      : '';
+    return `
+<div class="pub-card" onclick="bukaDetail(${idx})" style="animation-delay:${delay}s;cursor:pointer">
+  <div class="card-cover">
+    ${coverHTML}
+    <span class="card-kat ${katClass}">${esc(p.kategori)}</span>
+    ${badge}
+  </div>
+  <div class="card-body">
+    <div class="card-date">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      ${esc(p.tanggal||'')}
+    </div>
+    <div class="card-title">${esc(p.judul)}</div>
+    <div class="card-desc">${esc(p.deskripsi||'')}</div>
+    <div class="card-footer">
+      <span class="card-year">${p.tahun||'–'}</span>
+      <span class="card-btn">${hasLocal?'Buka PDF':'Detail'}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </span>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+// ── Pagination ─────────────────────────────────────────────────
+function renderPager() {
+  const totalPages = Math.ceil(filtered.length / LIMIT);
+  const p = document.getElementById('pager');
+  if (totalPages <= 1) { p.innerHTML=''; return; }
+
+  let html = '';
+  const prev = curPage > 1;
+  const next = curPage < totalPages;
+  html += `<button class="page-btn" onclick="goPage(${curPage-1})" ${prev?'':'disabled'}>‹</button>`;
+
+  const pages = getPageRange(curPage, totalPages);
+  pages.forEach(n => {
+    if (n === '…') html += `<button class="page-btn" disabled>…</button>`;
+    else html += `<button class="page-btn ${n===curPage?'active':''}" onclick="goPage(${n})">${n}</button>`;
+  });
+  html += `<button class="page-btn" onclick="goPage(${curPage+1})" ${next?'':'disabled'}>›</button>`;
+  p.innerHTML = html;
+}
+
+function getPageRange(cur, total) {
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  const r = [];
+  if (cur <= 4) { for(let i=1;i<=5;i++) r.push(i); r.push('…'); r.push(total); }
+  else if (cur >= total-3) { r.push(1); r.push('…'); for(let i=total-4;i<=total;i++) r.push(i); }
+  else { r.push(1); r.push('…'); for(let i=cur-1;i<=cur+1;i++) r.push(i); r.push('…'); r.push(total); }
+  return r;
+}
+
+function goPage(n) {
+  curPage = n;
+  renderPage(); renderPager();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── View toggle ────────────────────────────────────────────────
+function setView(v) {
+  curView = v;
+  document.getElementById('vGrid').classList.toggle('active', v==='grid');
+  document.getElementById('vList').classList.toggle('active', v==='list');
+  renderPage();
+}
+
+// ── Escape HTML ────────────────────────────────────────────────
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// Cover BPS lewat proxy lokal (hindari blok CORP browser)
+function cvr(u){
+  if (!u) return '';
+  if (u.startsWith('/')) return u;
+  if (u.includes('_next/image')) {
+    const m = u.match(/[?&]url=([^&]+)/);
+    if (m) return '/api/cover?url=' + encodeURIComponent(decodeURIComponent(m[1]));
+  }
+  return '/api/cover?url=' + encodeURIComponent(u);
+}
+
+// ── Modal Detail Publikasi ─────────────────────────────────────
+function bukaDetail(idx) {
+  const p = pubDetailMap.get(String(idx));
+  if (!p) return;
+
+  const [, katColor] = KAT_MAP[p.kategori] || KAT_MAP['Lainnya'];
+  const modal = document.getElementById('detailModal');
+  modal.style.display = 'flex';
+
+  // Kategori badge
+  document.getElementById('dm-kat-badge').innerHTML =
+    `<span style="background:${katColor}22;color:${katColor};padding:3px 12px;border-radius:99px;font-size:.72rem;font-weight:700">${esc(p.kategori)}</span>`;
+
+  // Cover
+  const coverWrap = document.getElementById('dm-cover-wrap');
+  const coverUrl = cvr(p.cover);
+  if (coverUrl) {
+    coverWrap.innerHTML = `<img src="${esc(coverUrl)}" alt="${esc(p.judul)}"
+      style="max-width:160px;max-height:200px;object-fit:contain;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15)"
+      onerror="this.style.display='none'">`;
+  } else {
+    coverWrap.innerHTML = `<div style="width:120px;height:160px;background:linear-gradient(135deg,#0d2137,#1a5fb4);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:3rem;color:rgba(255,255,255,.3)">📄</div>`;
+  }
+
+  // Judul
+  document.getElementById('dm-title').textContent = p.judul;
+
+  // Meta
+  document.getElementById('dm-meta').innerHTML = `
+    <span>📅 ${esc(p.tanggal||'–')}</span>
+    <span>📆 Tahun ${p.tahun||'–'}</span>
+    ${p.fileLokal ? '<span style="color:#10b981;font-weight:600">📥 Tersimpan Lokal</span>' : ''}`;
+
+  // Deskripsi
+  document.getElementById('dm-desc').textContent = p.deskripsi || 'Tidak ada deskripsi tersedia.';
+
+  // Tombol aksi
+  let btns = '';
+  if (p.fileLokal) {
+    // Ada PDF lokal → buka langsung tanpa internet
+    btns += `<a href="${esc(p.fileLokal)}" target="_blank"
+      style="padding:10px 20px;background:#10b981;color:#fff;border-radius:9px;font-size:.86rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:7px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Buka PDF (Lokal)</a>`;
+  }
+  if (p.url) {
+    btns += `<a href="${esc(p.url)}" target="_blank" rel="noopener"
+      style="padding:10px 20px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.86rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:7px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/></svg>
+      Buka di Website BPS</a>`;
+  }
+  if (!p.fileLokal && !p.url) {
+    btns += `<span style="font-size:.82rem;color:#94a3b8">Tidak ada file tersedia</span>`;
+  }
+  // Tombol tutup
+  btns += `<button onclick="document.getElementById('detailModal').style.display='none'"
+    style="padding:10px 18px;background:transparent;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.86rem;font-weight:600;color:#64748b;cursor:pointer">
+    Tutup</button>`;
+  document.getElementById('dm-actions').innerHTML = btns;
+}
+
+// Tutup modal saat klik background
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+</script>
+</body>
+</html>
+

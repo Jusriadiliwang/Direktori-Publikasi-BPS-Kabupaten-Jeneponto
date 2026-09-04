@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bps-jeneponto-publikasi
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx playwright install --with-deps chromium
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: bps-data
+      mountPath: /data
+      sizeGB: 1

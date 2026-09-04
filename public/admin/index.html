@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin – BPS Jeneponto Publikasi</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d2137;--blue:#1a5fb4;--blue2:#2980d4;--accent:#f59e0b;
+  --green:#10b981;--red:#ef4444;--purple:#7c3aed;--orange:#f97316;
+  --white:#fff;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;
+  --text:#0f172a;--r:10px;--sh:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray100);color:var(--text);min-height:100vh}
+
+/* ══ LOGIN PAGE ══ */
+.pg-login{display:none;min-height:100vh;background:linear-gradient(135deg,#061429 0%,#0d2a52 50%,#0f3872 100%);align-items:center;justify-content:center}
+.pg-login.show{display:flex}
+.login-card{background:var(--white);border-radius:16px;padding:38px 34px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:26px;justify-content:center}
+.login-logo img{width:48px;height:48px;object-fit:contain}
+.login-logo-text{font-size:.95rem;font-weight:800;color:var(--navy);line-height:1.3}
+.login-logo-text small{font-size:.7rem;color:var(--gray500);font-weight:400;display:block}
+.fl{font-size:.73rem;font-weight:700;color:var(--gray600);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--gray200);border-radius:8px;font-size:.9rem;color:var(--text);background:var(--gray50);outline:none;transition:.2s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,180,.12);background:var(--white)}
+.fg{margin-bottom:16px}
+.btn-login{width:100%;padding:12px;background:var(--blue);color:var(--white);border:none;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:4px}
+.btn-login:hover{background:var(--navy)}
+.login-err{display:none;background:#fee2e2;color:#b91c1c;border-radius:7px;padding:9px 13px;font-size:.81rem;margin-bottom:14px}
+.login-err.show{display:block}
+.login-hint{text-align:center;margin-top:14px;font-size:.75rem;color:var(--gray400)}
+
+/* ══ ADMIN LAYOUT ══ */
+.pg-admin{display:none}
+.pg-admin.show{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:238px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;overflow-y:auto}
+.sb-logo{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-logo img{width:36px;height:36px;object-fit:contain;background:rgba(255,255,255,.1);border-radius:7px;padding:3px}
+.sb-logo-text{color:var(--white);font-size:.8rem;font-weight:700;line-height:1.3}
+.sb-logo-text small{font-size:.67rem;opacity:.55;font-weight:400;display:block}
+.sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:3px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;color:rgba(255,255,255,.6);font-size:.84rem;font-weight:500;cursor:pointer;transition:.2s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:var(--white)}
+.nav-item.active{background:rgba(255,255,255,.15);color:var(--white);font-weight:600}
+.nav-item svg{flex-shrink:0;opacity:.8}
+.sb-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{font-size:.76rem;color:rgba(255,255,255,.5);margin-bottom:8px}
+.sb-user strong{color:var(--white);font-size:.83rem;display:block;margin-bottom:1px}
+.btn-logout{width:100%;padding:8px;background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.28);border-radius:7px;font-size:.79rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.2s}
+.btn-logout:hover{background:var(--red);color:var(--white)}
+
+/* CONTENT */
+.admin-content{margin-left:238px;flex:1;padding:26px;min-width:0}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* PAGE HEADER */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.ph-title{font-size:1.25rem;font-weight:800;color:var(--navy)}
+.ph-sub{font-size:.8rem;color:var(--gray500);margin-top:2px}
+
+/* BUTTONS */
+.btn{padding:9px 16px;border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:var(--white)}.btn-primary:not(:disabled):hover{background:var(--navy)}
+.btn-success{background:var(--green);color:var(--white)}.btn-success:not(:disabled):hover{background:#059669}
+.btn-danger{background:var(--red);color:var(--white)}.btn-danger:not(:disabled):hover{background:#dc2626}
+.btn-warning{background:var(--accent);color:var(--white)}.btn-warning:not(:disabled):hover{background:#d97706}
+.btn-ghost{background:transparent;color:var(--gray600);border:1.5px solid var(--gray200)}.btn-ghost:not(:disabled):hover{border-color:var(--blue);color:var(--blue)}
+.btn-purple{background:var(--purple);color:var(--white)}.btn-purple:not(:disabled):hover{background:#6d28d9}
+.btn-sm{padding:5px 11px;font-size:.77rem}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--white);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);border-left:4px solid transparent}
+.stat-card.c1{border-left-color:var(--blue)}.stat-card.c2{border-left-color:var(--green)}
+.stat-card.c3{border-left-color:var(--accent)}.stat-card.c4{border-left-color:var(--purple)}
+.sc-label{font-size:.72rem;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+.sc-val{font-size:1.75rem;font-weight:800;color:var(--navy)}
+.sc-desc{font-size:.73rem;color:var(--gray400);margin-top:3px}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:20px}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.card-head-title{font-size:.9rem;font-weight:700;color:var(--navy)}
+
+/* TABLE */
+.tbl-filters{padding:14px 18px;border-bottom:1px solid var(--gray100);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search-tbl{padding:7px 11px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.83rem;outline:none;background:var(--gray50);width:230px;transition:.2s}
+.search-tbl:focus{border-color:var(--blue);background:var(--white)}
+.tbl-sel{padding:7px 10px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.82rem;background:var(--gray50);outline:none;transition:.2s}
+.tbl-sel:focus{border-color:var(--blue)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead{background:var(--gray50)}
+th{padding:10px 14px;text-align:left;font-weight:700;font-size:.73rem;text-transform:uppercase;letter-spacing:.3px;color:var(--gray500);white-space:nowrap;border-bottom:1px solid var(--gray100)}
+td{padding:11px 14px;border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:var(--gray50)}
+.td-cover{width:42px;height:52px;object-fit:cover;border-radius:4px;background:var(--gray200);display:block}
+.td-cover-ph{width:42px;height:52px;background:var(--gray200);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.td-title strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;color:var(--navy);font-size:.85rem}
+.td-title span{font-size:.74rem;color:var(--gray400);margin-top:1px;display:block}
+.td-acts{display:flex;gap:4px;flex-wrap:wrap}
+.tbl-footer{padding:12px 18px;border-top:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:var(--gray500)}
+.pager-btns{display:flex;gap:3px}
+.pg-btn{width:28px;height:28px;border:1.5px solid var(--gray200);background:var(--white);border-radius:6px;font-size:.77rem;font-weight:600;color:var(--gray600);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.pg-btn:hover{border-color:var(--blue);color:var(--blue)}
+.pg-btn.active{background:var(--blue);border-color:var(--blue);color:var(--white)}
+.pg-btn:disabled{opacity:.35;cursor:default}
+
+/* BADGES */
+.badge{padding:2px 8px;border-radius:99px;font-size:.69rem;font-weight:700;white-space:nowrap}
+.badge-admin{background:rgba(139,92,246,.15);color:#6d28d9}
+.badge-editor{background:rgba(16,185,129,.12);color:#047857}
+.badge-viewer{background:rgba(100,116,139,.1);color:var(--gray600)}
+.badge-active{background:rgba(16,185,129,.12);color:#047857}
+.badge-inactive{background:rgba(239,68,68,.1);color:#b91c1c}
+.kat-badge{padding:3px 8px;border-radius:99px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.kat-dna{background:rgba(37,99,235,.12);color:#1d4ed8}
+.kat-sd{background:rgba(14,165,233,.12);color:#0369a1}
+.kat-pdrb{background:rgba(139,92,246,.12);color:#7c3aed}
+.kat-ipm{background:rgba(16,185,129,.12);color:#047857}
+.kat-kms{background:rgba(245,158,11,.12);color:#b45309}
+.kat-ktk{background:rgba(99,102,241,.12);color:#4338ca}
+.kat-ptr{background:rgba(5,150,105,.12);color:#065f46}
+.kat-ksj{background:rgba(236,72,153,.12);color:#9d174d}
+.kat-kec{background:rgba(6,182,212,.12);color:#0e7490}
+.kat-hi{background:rgba(239,68,68,.12);color:#b91c1c}
+.kat-pd{background:rgba(132,204,22,.12);color:#3f6212}
+.kat-lain{background:rgba(100,116,139,.1);color:var(--gray600)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--white);z-index:1}
+.modal-head h3{font-size:1rem;font-weight:700;color:var(--navy)}
+.modal-close{width:28px;height:28px;border:none;background:var(--gray100);border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--gray500);transition:.2s}
+.modal-close:hover{background:var(--gray200);color:var(--text)}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--gray100);display:flex;gap:9px;justify-content:flex-end}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:.7rem;color:var(--gray400);margin-top:3px}
+.fsel,.finp,.ftxt{width:100%;padding:9px 12px;border:1.5px solid var(--gray200);border-radius:7px;font-size:.86rem;color:var(--text);background:var(--gray50);outline:none;transition:.2s}
+.fsel:focus,.finp:focus,.ftxt:focus{border-color:var(--blue);background:var(--white)}
+.ftxt{resize:vertical;min-height:86px}
+.upload-zone{border:2px dashed var(--gray200);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:.2s;background:var(--gray50)}
+.upload-zone:hover{border-color:var(--blue);background:#eff6ff}
+.upload-zone input{display:none}
+.upload-zone p{font-size:.8rem;color:var(--gray500);margin-top:5px}
+.upreview{max-height:72px;border-radius:5px;margin-top:7px}
+
+/* IMPORT */
+.import-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:22px;margin-bottom:18px}
+.iprog{display:none;margin-top:14px}.iprog.show{display:block}
+.iprog-track{height:9px;background:var(--gray200);border-radius:99px;overflow:hidden;margin:9px 0}
+.iprog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:99px;width:0%;transition:width .4s}
+.iprog-log{background:var(--gray800);color:#a5b4fc;border-radius:7px;padding:10px 12px;font-size:.73rem;font-family:monospace;max-height:130px;overflow-y:auto;line-height:1.7;margin-top:7px}
+
+/* SUMBER / SYNC */
+.btn-blue{background:var(--blue);color:var(--white)}.btn-blue:not(:disabled):hover{background:var(--navy)}
+.src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.src-card{background:var(--gray50);border:1px solid var(--gray200);border-radius:10px;padding:14px 15px}
+.src-card .src-nama{font-size:.86rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px}
+.src-card .src-url{font-size:.72rem;color:var(--blue);word-break:break-all;margin:3px 0 8px;display:block}
+.src-card .src-row{font-size:.75rem;color:var(--gray500);display:flex;justify-content:space-between;gap:8px;margin-top:4px}
+.src-status{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:99px}
+.src-status.ok{background:#d1fae5;color:#047857}
+.src-status.auto{background:#dbeafe;color:#1d4ed8}
+.src-status.ext{background:#f1f5f9;color:#64748b}
+.src-bullet{width:6px;height:6px;border-radius:99px;flex-shrink:0;display:inline-block;background:var(--green)}
+
+/* PASSWORD */
+.pw-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:26px;max-width:420px}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--gray800);color:var(--white);padding:11px 18px;border-radius:9px;font-size:.84rem;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transform:translateY(6px);transition:.3s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}.toast.info{background:var(--blue)}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div class="pg-login" id="pgLogin">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="/assets/logo-bps.png" alt="BPS"/>
+      <div class="login-logo-text">BPS Kab. Jeneponto<small>Panel Administrator</small></div>
+    </div>
+    <h2 style="font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:5px">Masuk ke Panel Admin</h2>
+    <p style="font-size:.82rem;color:var(--gray500);margin-bottom:22px">Masukkan kredensial administrator</p>
+    <div class="login-err" id="loginErr"></div>
+    <div class="fg"><label class="fl">Username</label><input class="fi" id="lUser" type="text" placeholder="Masukkan username" autocomplete="username"/></div>
+    <div class="fg"><label class="fl">Password</label><input class="fi" id="lPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+    <button class="btn-login" onclick="doLogin()">Masuk</button>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div class="pg-admin" id="pgAdmin">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <img src="/assets/logo-bps.png" alt="BPS"/>
+      <div class="sb-logo-text">BPS Jeneponto<small>Panel Admin</small></div>
+    </div>
+    <nav class="sb-nav">
+      <button class="nav-item active" data-tab="dashboard" onclick="goTab('dashboard')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+      </button>
+      <button class="nav-item" data-tab="publikasi" onclick="goTab('publikasi')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Publikasi
+      </button>
+      <button class="nav-item" data-tab="users" onclick="goTab('users')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Manajemen User
+      </button>
+      <button class="nav-item" data-tab="import" onclick="goTab('import')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>Import dari BPS
+      </button>
+      <button class="nav-item" data-tab="sync" onclick="goTab('sync')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Sinkronisasi Data
+      </button>
+      <button class="nav-item" data-tab="sandi" onclick="goTab('sandi')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Ganti Password
+      </button>
+      <a class="nav-item" href="/" target="_blank" style="margin-top:8px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Lihat Website
+      </a>
+      <a class="nav-item" href="/indikator.html" target="_blank">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Indikator Makro
+      </a>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user"><strong id="adminName">–</strong>Administrator</div>
+      <button class="btn-logout" onclick="doLogout()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Keluar
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="admin-content">
+
+    <!-- ── Dashboard ── -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="ph"><div><div class="ph-title">Dashboard</div><div class="ph-sub">Ringkasan sistem BPS Jeneponto</div></div></div>
+      <div class="stats-grid">
+        <div class="stat-card c1"><div class="sc-label">Total Publikasi</div><div class="sc-val" id="ds-total">–</div><div class="sc-desc">Seluruh publikasi</div></div>
+        <div class="stat-card c2"><div class="sc-label">User Terdaftar</div><div class="sc-val" id="ds-users">–</div><div class="sc-desc">Pengguna aktif</div></div>
+        <div class="stat-card c3"><div class="sc-label">Rentang Tahun</div><div class="sc-val" id="ds-thn">–</div><div class="sc-desc">Data tersedia</div></div>
+        <div class="stat-card c4"><div class="sc-label">Upload Lokal</div><div class="sc-val" id="ds-lokal">–</div><div class="sc-desc">Ditambah manual</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-head-title">6 Publikasi Terbaru</span></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Cover</th><th>Judul</th><th>Kategori</th><th>Tahun</th></tr></thead>
+          <tbody id="ds-recent"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ── Publikasi ── -->
+    <div class="tab-content" id="tab-publikasi">
+      <div class="ph">
+        <div><div class="ph-title">Manajemen Publikasi</div><div class="ph-sub" id="pubSub">Memuat…</div></div>
+        <button class="btn btn-primary" onclick="bukaModal('tambah')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah
+        </button>
+      </div>
+      <div class="card">
+        <div class="tbl-filters">
+          <input class="search-tbl" id="tblQ" type="text" placeholder="Cari judul…" oninput="tblFilter()"/>
+          <select class="tbl-sel" id="tblKat" onchange="tblFilter()"><option value="">Semua Kategori</option></select>
+          <select class="tbl-sel" id="tblThn" onchange="tblFilter()"><option value="">Semua Tahun</option></select>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Cover</th><th>Judul</th><th>Kategori</th><th>Tahun</th><th>Aksi</th></tr></thead>
+          <tbody id="tblPubBody"></tbody>
+        </table></div>
+        <div class="tbl-footer">
+          <span id="tblPubInfo">–</span>
+          <div class="pager-btns" id="tblPubPager"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Users ── -->
+    <div class="tab-content" id="tab-users">
+      <div class="ph"><div><div class="ph-title">Manajemen User</div><div class="ph-sub" id="userSub">Memuat…</div></div></div>
+      <div class="card">
+        <div class="tbl-filters">
+          <input class="search-tbl" id="userQ" type="text" placeholder="Cari username…" oninput="userFilter()"/>
+          <select class="tbl-sel" id="userRole" onchange="userFilter()">
+            <option value="">Semua Role</option>
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+          </select>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th>Bergabung</th><th>Aksi</th></tr></thead>
+          <tbody id="tblUserBody"></tbody>
+        </table></div>
+        <div class="tbl-footer"><span id="userInfo">–</span></div>
+      </div>
+    </div>
+
+    <!-- ── Import ── -->
+    <div class="tab-content" id="tab-import">
+      <div class="ph"><div><div class="ph-title">Import dari BPS</div><div class="ph-sub">Indikator Makro diperbarui otomatis, lalu publikasi diambil dari jenepontokab.bps.go.id (±20 detik, paralel)</div></div></div>
+      <div class="import-card">
+        <p style="font-size:.84rem;color:var(--gray500);margin-bottom:14px;line-height:1.6">Proses ini <strong>otomatis menyegarkan Indikator Makro</strong> dari Google Sheets BPS (s.bps.go.id/7304_indikatormakro), lalu mengambil ulang semua publikasi dari website BPS Jeneponto. Data upload manual tetap dipertahankan.</p>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-purple" id="btnImport" onclick="mulaiImport()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.09"/></svg>Mulai Import
+          </button>
+          <button class="btn btn-ghost" id="btnBatal" onclick="batalImport()" style="display:none">Batalkan</button>
+        </div>
+        <div class="iprog" id="iprog">
+          <div style="display:flex;justify-content:space-between;font-size:.81rem;font-weight:600;color:var(--gray600)">
+            <span id="iprogLabel">Memuat…</span><span id="iprogCount"></span>
+          </div>
+          <div class="iprog-track"><div class="iprog-fill" id="iprogFill"></div></div>
+          <div class="iprog-log" id="iprogLog"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Sinkronisasi Data ── -->
+    <div class="tab-content" id="tab-sync">
+      <div class="ph"><div><div class="ph-title">Sinkronisasi Data</div><div class="ph-sub">Data otomatis ditarik dari sumber BPS saat admin memperbarui</div></div></div>
+      <div class="import-card">
+        <p style="font-size:.84rem;color:var(--gray600);margin-bottom:14px;line-height:1.7">
+          Panel ini menampilkan sumber-sumber BPS yang saling terhubung dengan website ini.
+          <strong>Indikator Makro</strong> diperbarui otomatis dari Google Sheets BPS
+          (s.bps.go.id/7304_indikatormakro) setiap kali admin menjalankan import publikasi.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn btn-blue" id="btnSyncInd" onclick="refreshIndikatorSaja()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>Refresh Indikator Sekarang
+          </button>
+          <button class="btn btn-purple" onclick="mulaiImportSync()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.09"/></svg>Sinkronisasi Lengkap
+          </button>
+        </div>
+        <div class="src-grid" id="srcGrid"><div style="color:var(--gray400);font-size:.82rem">Memuat sumber…</div></div>
+        <div class="iprog" id="syncProg">
+          <div style="display:flex;justify-content:space-between;font-size:.81rem;font-weight:600;color:var(--gray600)">
+            <span id="syncProgLabel">Memuat…</span><span id="syncProgCount"></span>
+          </div>
+          <div class="iprog-log" id="syncLog"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Ganti Password ── -->
+    <div class="tab-content" id="tab-sandi">
+      <div class="ph"><div><div class="ph-title">Ganti Password</div><div class="ph-sub">Ubah password akun administrator</div></div></div>
+      <div class="pw-card">
+        <div class="fg"><label class="fl">Password Lama</label><input class="finp" id="pwLama" type="password" placeholder="Password saat ini"/></div>
+        <div class="fg"><label class="fl">Password Baru</label><input class="finp" id="pwBaru" type="password" placeholder="Min. 6 karakter"/></div>
+        <div class="fg"><label class="fl">Konfirmasi Password Baru</label><input class="finp" id="pwKonfirm" type="password" placeholder="Ulangi password baru"/></div>
+        <button class="btn btn-primary" onclick="gantiSandi()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Simpan Password
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /admin-content -->
+</div><!-- /pg-admin -->
+
+<!-- ── MODAL PUBLIKASI ── -->
+<div class="modal-bg" id="modalPub">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalPubTitle">Tambah Publikasi</h3>
+      <button class="modal-close" onclick="tutupModal('modalPub')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mId"/>
+      <div class="form-row2">
+        <div class="fg" style="grid-column:1/-1"><label class="fl">Judul *</label><input class="finp" id="mJudul" type="text" placeholder="Judul publikasi"/></div>
+        <div class="fg"><label class="fl">Tanggal Terbit</label><input class="finp" id="mTanggal" type="text" placeholder="28 Februari 2025"/></div>
+        <div class="fg"><label class="fl">Kategori</label>
+          <select class="fsel" id="mKat">
+            <option>Dalam Angka</option><option>Statistik Daerah</option><option>PDRB</option>
+            <option>IPM</option><option>Kemiskinan</option><option>Ketenagakerjaan</option>
+            <option>Pertanian</option><option>Kesejahteraan</option><option>Kecamatan</option>
+            <option>Harga &amp; Inflasi</option><option>Potensi Desa</option><option selected>Lainnya</option>
+          </select>
+        </div>
+        <div class="fg" style="grid-column:1/-1"><label class="fl">Deskripsi</label><textarea class="ftxt" id="mDesk" placeholder="Deskripsi singkat…"></textarea></div>
+
+        <!-- Link BPS: tersembunyi, muncul saat klik -->
+        <div class="fg" style="grid-column:1/-1" id="urlToggleWrap">
+          <button type="button" onclick="toggleUrl()" style="background:none;border:1px dashed var(--gray300);border-radius:7px;padding:7px 14px;font-size:.78rem;color:var(--gray500);cursor:pointer;display:flex;align-items:center;gap:5px;width:100%;transition:.2s" id="btnToggleUrl">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah link sumber (opsional)
+          </button>
+        </div>
+        <div class="fg" style="grid-column:1/-1;display:none" id="urlField">
+          <label class="fl">Link Sumber (URL)</label>
+          <input class="finp" id="mUrl" type="url" placeholder="https://jenepontokab.bps.go.id/id/publication/…"/>
+          <p class="form-hint">Isi jika publikasi berasal dari website BPS atau sumber lain</p>
+        </div>
+
+        <!-- Progress bar upload -->
+        <div class="fg" style="grid-column:1/-1;display:none" id="uploadProgress">
+          <div style="background:var(--gray100);border-radius:8px;overflow:hidden;height:8px">
+            <div id="uploadBar" style="height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));width:0%;transition:width .3s;border-radius:8px"></div>
+          </div>
+          <p style="font-size:.73rem;color:var(--gray500);margin-top:4px" id="uploadStatus">Mengupload...</p>
+        </div>
+        <div class="fg">
+          <label class="fl">Cover (gambar)</label>
+          <div class="upload-zone" onclick="document.getElementById('mCoverFile').click()">
+            <input type="file" id="mCoverFile" accept="image/*" onchange="prevCover(this)"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray400)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p>Klik pilih gambar</p>
+            <img id="mCoverPrev" class="upreview" style="display:none"/>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">File PDF</label>
+          <div class="upload-zone" onclick="document.getElementById('mPdfFile').click()">
+            <input type="file" id="mPdfFile" accept=".pdf" onchange="document.getElementById('mPdfName').textContent=this.files[0]?.name||''"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray400)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>Klik pilih PDF</p>
+            <p id="mPdfName" style="font-weight:600;color:var(--blue);margin-top:4px;font-size:.8rem"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="tutupModal('modalPub')">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanPub" onclick="simpanPub()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL EDIT USER ── -->
+<div class="modal-bg" id="modalUser">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head"><h3>Edit User</h3><button class="modal-close" onclick="tutupModal('modalUser')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="uId"/>
+      <div class="fg"><label class="fl">Nama</label><input class="finp" id="uNama" type="text"/></div>
+      <div class="fg"><label class="fl">Role</label>
+        <select class="fsel" id="uRole">
+          <option value="viewer">Viewer – hanya baca</option>
+          <option value="editor">Editor – bisa edit indikator</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Status</label>
+        <select class="fsel" id="uAktif">
+          <option value="true">Aktif</option>
+          <option value="false">Nonaktif</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="tutupModal('modalUser')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanUser()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM ── -->
+<div class="modal-bg" id="modalConfirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head"><h3 id="confirmTitle">Konfirmasi</h3><button class="modal-close" onclick="tutupModal('modalConfirm')">×</button></div>
+    <div class="modal-body"><p style="font-size:.88rem;color:var(--gray600)" id="confirmMsg">Yakin?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="tutupModal('modalConfirm')">Batal</button>
+      <button class="btn btn-danger" id="btnConfirmOk">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════════════
+let token    = localStorage.getItem('bps_token') || '';
+let namAdmin = localStorage.getItem('bps_nama')  || '';
+let pubData  = [], pubFilt = [], pubPage = 1, PUB_LIM = 10;
+let usrData  = [], usrFilt = [];
+let importCtrl = null;
+// Store pub objects by id for edit (avoids inline JSON issues)
+const pubMap = new Map();
+
+// ══ BOOT ═══════════════════════════════════════════════════════
+cekAuth();
+
+function cekAuth() {
+  if (!token) { show('pgLogin'); return; }
+  show('pgAdmin');
+  document.getElementById('adminName').textContent = namAdmin;
+  loadDashboard();
+}
+
+function show(id) {
+  document.getElementById('pgLogin').classList.toggle('show', id==='pgLogin');
+  document.getElementById('pgAdmin').classList.toggle('show', id==='pgAdmin');
+}
+
+// ══ LOGIN / LOGOUT ═════════════════════════════════════════════
+async function doLogin() {
+  const u = document.getElementById('lUser').value.trim();
+  const p = document.getElementById('lPass').value;
+  const err = document.getElementById('loginErr');
+  err.classList.remove('show');
+  const r = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p}) });
+  const j = await r.json();
+  if (!j.ok) { err.textContent = j.error; err.classList.add('show'); return; }
+  token = j.token; namAdmin = j.nama;
+  localStorage.setItem('bps_token', token); localStorage.setItem('bps_nama', namAdmin);
+  show('pgAdmin');
+  document.getElementById('adminName').textContent = namAdmin;
+  loadDashboard();
+}
+document.getElementById('lPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  token=''; namAdmin=''; localStorage.removeItem('bps_token'); localStorage.removeItem('bps_nama');
+  show('pgLogin');
+}
+
+// ══ TABS ═══════════════════════════════════════════════════════
+function goTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab===tab));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (tab==='publikasi') loadPub();
+  if (tab==='users')     loadUsers();
+  if (tab==='sync')      loadSumber();
+}
+
+// ══ DASHBOARD ══════════════════════════════════════════════════
+async function loadDashboard() {
+  const [sr, ur] = await Promise.all([
+    fetch('/api/stats').then(r=>r.json()),
+    apiGet('/api/admin/users'),
+  ]);
+  if (sr.ok) {
+    document.getElementById('ds-total').textContent = sr.total.toLocaleString('id');
+    document.getElementById('ds-thn').textContent   = `${sr.tahunMin}–${sr.tahunMax}`;
+    // Count local
+    const pr = await apiGet('/api/admin/publikasi');
+    const lokal = (pr.data||[]).filter(p=>p.lokal).length;
+    document.getElementById('ds-lokal').textContent = lokal;
+    // Recent
+    document.getElementById('ds-recent').innerHTML = (sr.terbaru||[]).map(p=>`
+      <tr>
+        <td>${cvr(p.cover)?`<img class="td-cover" src="${esc(cvr(p.cover))}" loading="lazy">` :'<div class="td-cover-ph">📄</div>'}</td>
+        <td class="td-title"><strong>${esc(p.judul)}</strong><span>${esc(p.tanggal||'')}</span></td>
+        <td><span class="kat-badge ${katCls(p.kategori)}">${esc(p.kategori)}</span></td>
+        <td>${p.tahun||'–'}</td>
+      </tr>`).join('');
+  }
+  if (ur.ok) document.getElementById('ds-users').textContent = ur.total;
+}
+
+// ══ PUBLIKASI ══════════════════════════════════════════════════
+async function loadPub() {
+  const j = await apiGet('/api/admin/publikasi');
+  pubData = j.data || [];
+  pubMap.clear();
+  pubData.forEach(p => pubMap.set(String(p.id), p));
+  document.getElementById('pubSub').textContent = `${j.total} publikasi`;
+  // Dropdowns
+  const kats = [...new Set(pubData.map(p=>p.kategori).filter(Boolean))].sort();
+  const thns = [...new Set(pubData.map(p=>p.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  document.getElementById('tblKat').innerHTML = '<option value="">Semua Kategori</option>' + kats.map(k=>`<option>${k}</option>`).join('');
+  document.getElementById('tblThn').innerHTML = '<option value="">Semua Tahun</option>' + thns.map(t=>`<option>${t}</option>`).join('');
+  tblFilter();
+}
+
+function tblFilter() {
+  const q   = document.getElementById('tblQ').value.toLowerCase();
+  const kat = document.getElementById('tblKat').value;
+  const thn = document.getElementById('tblThn').value;
+  pubFilt = pubData.filter(p =>
+    (!q   || p.judul?.toLowerCase().includes(q)) &&
+    (!kat || p.kategori===kat) &&
+    (!thn || String(p.tahun)===thn)
+  );
+  pubPage=1; renderPubTable();
+}
+
+function renderPubTable() {
+  const total = pubFilt.length;
+  const s = (pubPage-1)*PUB_LIM;
+  const items = pubFilt.slice(s, s+PUB_LIM);
+  document.getElementById('tblPubInfo').textContent = `${s+1}–${Math.min(s+PUB_LIM,total)} dari ${total}`;
+  document.getElementById('tblPubBody').innerHTML = items.map(p => `
+    <tr>
+      <td>${cvr(p.cover)?`<img class="td-cover" src="${esc(cvr(p.cover))}" loading="lazy">`:'<div class="td-cover-ph">📄</div>'}</td>
+      <td class="td-title"><strong>${esc(p.judul)}</strong><span>${esc(p.tanggal||'')}${p.lokal?' <em style="color:var(--green)">• Lokal</em>':''}</span></td>
+      <td><span class="kat-badge ${katCls(p.kategori)}">${esc(p.kategori)}</span></td>
+      <td>${p.tahun||'–'}</td>
+      <td>
+        <div class="td-acts">
+          <button class="btn btn-ghost btn-sm" onclick="editPub('${esc(String(p.id))}')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="konfirmHapus('${esc(String(p.id))}','pub')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Hapus
+          </button>
+          ${p.url?`<a class="btn btn-ghost btn-sm" href="${esc(p.url)}" target="_blank">↗</a>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+  // Pager
+  const tp = Math.ceil(total/PUB_LIM);
+  let pg = `<button class="pg-btn" ${pubPage<=1?'disabled':''} onclick="pubGoPage(${pubPage-1})">‹</button>`;
+  for(let i=1;i<=tp;i++){
+    if(tp>7 && i>2 && i<tp-1 && Math.abs(i-pubPage)>1) { if(i===3||i===tp-2) pg+='<button class="pg-btn" disabled>…</button>'; continue; }
+    pg+=`<button class="pg-btn ${i===pubPage?'active':''}" onclick="pubGoPage(${i})">${i}</button>`;
+  }
+  pg+=`<button class="pg-btn" ${pubPage>=tp?'disabled':''} onclick="pubGoPage(${pubPage+1})">›</button>`;
+  document.getElementById('tblPubPager').innerHTML = pg;
+}
+function pubGoPage(n){pubPage=n;renderPubTable();}
+
+// ── Modal publikasi ──────────────────────────────────────────
+function bukaModal(mode, id='') {
+  document.getElementById('modalPubTitle').textContent = mode==='tambah' ? 'Tambah Publikasi Baru' : 'Edit Publikasi';
+  const d = id ? (pubMap.get(String(id)) || {}) : {};
+  document.getElementById('mId').value      = d.id||'';
+  document.getElementById('mJudul').value   = d.judul||'';
+  document.getElementById('mTanggal').value = d.tanggal||'';
+  document.getElementById('mKat').value     = d.kategori||'Lainnya';
+  document.getElementById('mDesk').value    = d.deskripsi||'';
+  document.getElementById('mUrl').value     = d.url||'';
+  document.getElementById('mCoverPrev').style.display='none';
+  document.getElementById('mPdfName').textContent='';
+  document.getElementById('mCoverFile').value='';
+  document.getElementById('mPdfFile').value='';
+
+  // Reset URL field: tampilkan jika sudah ada URL, sembunyikan jika kosong
+  const hasUrl = !!(d.url);
+  document.getElementById('urlField').style.display     = hasUrl ? '' : 'none';
+  document.getElementById('urlToggleWrap').style.display = hasUrl ? 'none' : '';
+
+  // Reset progress
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('uploadBar').style.width = '0%';
+
+  document.getElementById('modalPub').classList.add('show');
+}
+function editPub(id) { bukaModal('edit', id); }
+
+function toggleUrl() {
+  document.getElementById('urlToggleWrap').style.display = 'none';
+  document.getElementById('urlField').style.display = '';
+  document.getElementById('mUrl').focus();
+}
+
+function prevCover(inp) {
+  const f=inp.files[0]; if(!f) return;
+  const img=document.getElementById('mCoverPrev');
+  img.src=URL.createObjectURL(f); img.style.display='block';
+}
+
+// Format bytes untuk tampilan
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(0) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+
+function simpanPub() {
+  const id    = document.getElementById('mId').value;
+  const judul = document.getElementById('mJudul').value.trim();
+  if (!judul) { toast('Judul tidak boleh kosong','error'); return; }
+
+  const btn = document.getElementById('btnSimpanPub');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px"><svg width="13" height="13" style="animation:spin .7s linear infinite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 1 0 20"/></svg>Menyimpan…</span>';
+
+  const fd = new FormData();
+  fd.append('judul',     judul);
+  fd.append('tanggal',   document.getElementById('mTanggal').value);
+  fd.append('kategori',  document.getElementById('mKat').value);
+  fd.append('deskripsi', document.getElementById('mDesk').value);
+  fd.append('url',       document.getElementById('mUrl').value);
+
+  const cf = document.getElementById('mCoverFile').files[0];
+  const pf = document.getElementById('mPdfFile').files[0];
+  if (cf) fd.append('cover', cf);
+  if (pf) fd.append('file',  pf);
+
+  // Gunakan XHR untuk progress bar
+  const xhr = new XMLHttpRequest();
+  const apiUrl = id ? `/api/admin/publikasi/${id}` : '/api/admin/publikasi';
+  xhr.open(id ? 'PUT' : 'POST', apiUrl);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+
+  const hasBigFile = (cf && cf.size > 10240) || (pf && pf.size > 10240);
+
+  if (hasBigFile) {
+    const progWrap  = document.getElementById('uploadProgress');
+    const progBar   = document.getElementById('uploadBar');
+    const progLabel = document.getElementById('uploadStatus');
+    progWrap.style.display = '';
+
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.round((e.loaded / e.total) * 100);
+      progBar.style.width = pct + '%';
+      progLabel.textContent = `Mengupload… ${fmtBytes(e.loaded)} / ${fmtBytes(e.total)} (${pct}%)`;
+    };
+
+    xhr.upload.onload = () => {
+      progBar.style.width = '100%';
+      progLabel.textContent = 'Memproses data…';
+    };
+  }
+
+  xhr.onload = () => {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Simpan';
+    document.getElementById('uploadProgress').style.display = 'none';
+    try {
+      const j = JSON.parse(xhr.responseText);
+      if (!j.ok) { toast(j.error||'Gagal menyimpan','error'); return; }
+      tutupModal('modalPub');
+      toast(id?'Publikasi diperbarui':'Publikasi ditambahkan','success');
+      loadPub(); loadDashboard();
+    } catch { toast('Respons server tidak valid','error'); }
+  };
+
+  xhr.onerror = () => {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Simpan';
+    document.getElementById('uploadProgress').style.display = 'none';
+    toast('Koneksi gagal. Coba lagi.', 'error');
+  };
+
+  xhr.send(fd);
+}
+
+// ── Hapus publikasi ──────────────────────────────────────────
+function konfirmHapus(id, jenis) {
+  document.getElementById('confirmTitle').textContent = jenis==='pub' ? 'Hapus Publikasi' : 'Hapus User';
+  document.getElementById('confirmMsg').textContent   = 'Apakah Anda yakin? Tindakan ini tidak dapat dibatalkan.';
+  document.getElementById('btnConfirmOk').onclick = async () => {
+    const url  = jenis==='pub' ? `/api/admin/publikasi/${id}` : `/api/admin/users/${id}`;
+    const r    = await fetch(url, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+    const j    = await r.json();
+    tutupModal('modalConfirm');
+    if (!j.ok) { toast(j.error||'Gagal hapus','error'); return; }
+    toast('Berhasil dihapus','success');
+    if(jenis==='pub') { loadPub(); loadDashboard(); }
+    else              { loadUsers(); loadDashboard(); }
+  };
+  document.getElementById('modalConfirm').classList.add('show');
+}
+
+// ══ USERS ══════════════════════════════════════════════════════
+async function loadUsers() {
+  const j = await apiGet('/api/admin/users');
+  usrData = j.data || [];
+  document.getElementById('userSub').textContent = `${j.total} user terdaftar`;
+  userFilter();
+}
+
+function userFilter() {
+  const q    = document.getElementById('userQ').value.toLowerCase();
+  const role = document.getElementById('userRole').value;
+  usrFilt = usrData.filter(u =>
+    (!q    || u.username?.toLowerCase().includes(q) || u.nama?.toLowerCase().includes(q)) &&
+    (!role || u.role===role)
+  );
+  renderUserTable();
+}
+
+function renderUserTable() {
+  document.getElementById('userInfo').textContent = `${usrFilt.length} user`;
+  document.getElementById('tblUserBody').innerHTML = usrFilt.map(u => `
+    <tr>
+      <td style="font-weight:600;color:var(--navy)">${esc(u.username)}</td>
+      <td>${esc(u.nama||'–')}</td>
+      <td><span class="badge badge-${u.role||'viewer'}">${u.role||'viewer'}</span></td>
+      <td><span class="badge ${u.aktif!==false?'badge-active':'badge-inactive'}">${u.aktif!==false?'Aktif':'Nonaktif'}</span></td>
+      <td style="color:var(--gray400);font-size:.78rem">${u.dibuatPada?new Date(u.dibuatPada).toLocaleDateString('id'):''}</td>
+      <td>
+        <div class="td-acts">
+          <button class="btn btn-ghost btn-sm" onclick="editUser('${esc(String(u.id))}','${esc(u.nama||'')}','${esc(u.role||'viewer')}',${u.aktif!==false})">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="konfirmHapus('${esc(String(u.id))}','user')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Hapus
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function editUser(id, nama, role, aktif) {
+  document.getElementById('uId').value     = id;
+  document.getElementById('uNama').value   = nama;
+  document.getElementById('uRole').value   = role;
+  document.getElementById('uAktif').value  = String(aktif);
+  document.getElementById('modalUser').classList.add('show');
+}
+
+async function simpanUser() {
+  const id    = document.getElementById('uId').value;
+  const nama  = document.getElementById('uNama').value.trim();
+  const role  = document.getElementById('uRole').value;
+  const aktif = document.getElementById('uAktif').value === 'true';
+  const r = await fetch(`/api/admin/users/${id}`, {
+    method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({ nama, role, aktif })
+  });
+  const j = await r.json();
+  tutupModal('modalUser');
+  if (!j.ok) { toast(j.error||'Gagal','error'); return; }
+  toast('User berhasil diperbarui','success');
+  loadUsers(); loadDashboard();
+}
+
+// ══ IMPORT SSE ══════════════════════════════════════════════════
+async function mulaiImport() {
+  document.getElementById('btnImport').style.display='none';
+  document.getElementById('btnBatal').style.display='inline-flex';
+  const prog = document.getElementById('iprog'); prog.classList.add('show');
+  const log  = document.getElementById('iprogLog'); log.innerHTML='';
+  const addLog = m => { log.innerHTML += m+'<br>'; log.scrollTop=log.scrollHeight; };
+  addLog('> Menghubungkan ke BPS Jeneponto…');
+
+  importCtrl = new AbortController();
+  try {
+    const r = await fetch('/api/admin/import', { headers:{'Authorization':'Bearer '+token}, signal:importCtrl.signal });
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf='';
+    while(true) {
+      const {done,value} = await reader.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines) {
+        if(!line.startsWith('data:')) continue;
+        try {
+          const ev = JSON.parse(line.slice(5));
+          if(ev.tipe==='info') {
+            addLog(`> Total ${ev.total} publikasi, ${ev.totalHalaman} halaman`);
+            document.getElementById('iprogLabel').textContent=`0/${ev.totalHalaman} halaman`;
+          } else if(ev.tipe==='indikator') {
+            addLog(ev.pesan||'');
+            document.getElementById('iprogLabel').textContent='Indikator Makro: autoupdate…';
+          } else if(ev.tipe==='halaman') {
+            const pct=Math.round((ev.nomor/ev.totalHalaman)*100);
+            document.getElementById('iprogFill').style.width=pct+'%';
+            document.getElementById('iprogLabel').textContent=`Halaman ${ev.nomor}/${ev.totalHalaman} (${pct}%)`;
+            document.getElementById('iprogCount').textContent=`+${ev.jumlah}`;
+            addLog(`> Hal ${ev.nomor}/${ev.totalHalaman} → +${ev.jumlah} pub`);
+          } else if(ev.tipe==='selesai') {
+            document.getElementById('iprogFill').style.width='100%';
+            addLog(`✓ SELESAI: ${ev.total} dari BPS, total ${ev.totalDenganLokal}`);
+            toast(`Import selesai: ${ev.total} publikasi diperbarui`,'success');
+            loadDashboard();
+          } else if(ev.tipe==='error') {
+            addLog(`✗ Error: ${ev.pesan}`); toast('Error saat import','error');
+          }
+        } catch {}
+      }
+    }
+  } catch(e) { if(e.name!=='AbortError') addLog('✗ '+e.message); }
+  selesaiImport();
+}
+function batalImport() { if(importCtrl){importCtrl.abort();importCtrl=null;} selesaiImport(); document.getElementById('iprogLog').innerHTML+='> Dibatalkan<br>'; }
+function selesaiImport() { document.getElementById('btnImport').style.display='inline-flex'; document.getElementById('btnBatal').style.display='none'; }
+
+// ══ SINKRONISASI DATA ════════════════════════════════════════════
+async function loadSumber() {
+  const grid = document.getElementById('srcGrid');
+  try {
+    const r = await apiGet('/api/sumber');
+    if (!r.ok || !r.sumber) { grid.innerHTML = '<div style="color:var(--gray400);font-size:.82rem">Data sumber tidak tersedia.</div>'; return; }
+    const tgl = t => t ? new Date(t).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' }) : '';
+    grid.innerHTML = r.sumber.map(s => {
+      const auto = /otomatis/i.test(s.arah||'');
+      const ext  = /eksternal|tautan/i.test(s.arah||'');
+      const cls  = auto ? 'auto' : ext ? 'ext' : (s.updateTerakhir ? 'ok' : 'ext');
+      const lbl  = auto ? 'Otomatis' : ext ? 'Eksternal' : 'Siap';
+      return `<div class="src-card">
+        <div class="src-nama"><span class="src-bullet"></span>${esc(s.nama)}</div>
+        <a class="src-url" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a>
+        <div class="src-row"><span>Wilayah</span><b>${esc(s.wilayah||'–')}</b></div>
+        <div class="src-row"><span>File</span><b>${esc(s.file||'–')}</b></div>
+        <div class="src-row"><span>Update terakhir</span><b>${s.updateTerakhir ? tgl(s.updateTerakhir) : '–'}</b></div>
+        <div style="margin-top:9px"><span class="src-status ${cls}">${lbl}</span></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--red);font-size:.82rem">Gagal memuat sumber: ${esc(e.message)}</div>`;
+  }
+}
+
+function syncLogAdd(m) {
+  const log = document.getElementById('syncLog');
+  if (log) { log.innerHTML += m + '<br>'; log.scrollTop = log.scrollHeight; }
+}
+
+async function refreshIndikatorSaja() {
+  const btn = document.getElementById('btnSyncInd');
+  btn.disabled = true;
+  const prog = document.getElementById('syncProg'); prog.classList.add('show');
+  const lab  = document.getElementById('syncProgLabel');
+  const cnt  = document.getElementById('syncProgCount');
+  document.getElementById('syncLog').innerHTML = '';
+  syncLogAdd('> Menghubungkan ke Google Sheets BPS…');
+  const syncCtrl = new AbortController();
+  try {
+    const r = await fetch('/api/admin/refresh/indikator', { headers:{'Authorization':'Bearer '+token}, signal:syncCtrl.signal });
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf='';
+    while(true) {
+      const {done,value} = await reader.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines) {
+        if(!line.startsWith('data:')) continue;
+        try {
+          const ev = JSON.parse(line.slice(5));
+          if (ev.tipe==='indikator') { syncLogAdd(ev.pesan||''); }
+          else if (ev.tipe==='selesai') { syncLogAdd('✓ '+(ev.pesan||'Selesai')); toast('Indikator Makro diperbarui','success'); }
+          else if (ev.tipe==='error') { syncLogAdd('✗ '+(ev.pesan||'Error')); toast('Gagal refresh indikator','error'); }
+        } catch {}
+      }
+    }
+  } catch(e) {
+    if (e.name!=='AbortError') syncLogAdd('✗ '+e.message);
+  }
+  btn.disabled = false;
+  loadSumber();
+}
+
+function mulaiImportSync() {
+  goTab('import');
+  mulaiImport();
+}
+
+// ══ GANTI PASSWORD ══════════════════════════════════════════════
+async function gantiSandi() {
+  const lama  = document.getElementById('pwLama').value;
+  const baru  = document.getElementById('pwBaru').value;
+  const konf  = document.getElementById('pwKonfirm').value;
+  if (baru!==konf)      { toast('Password baru tidak cocok','error'); return; }
+  if (baru.length<6)    { toast('Password min. 6 karakter','error');  return; }
+  const r = await fetch('/api/admin/password', {
+    method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({ passwordLama:lama, passwordBaru:baru })
+  });
+  const j = await r.json();
+  if (!j.ok) { toast(j.error,'error'); return; }
+  toast('Password berhasil diubah!','success');
+  ['pwLama','pwBaru','pwKonfirm'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══ HELPERS ═════════════════════════════════════════════════════
+async function apiGet(url) {
+  const r = await fetch(url, { headers:{'Authorization':'Bearer '+token} });
+  return r.json();
+}
+function tutupModal(id) { document.getElementById(id).classList.remove('show'); }
+function toast(msg,type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show'+(type?' '+type:'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3200);
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// Cover BPS lewat proxy lokal (hindari blok CORP browser)
+function cvr(u){
+  if (!u) return '';
+  if (u.startsWith('/')) return u;
+  if (u.includes('_next/image')) {
+    const m = u.match(/[?&]url=([^&]+)/);
+    if (m) return '/api/cover?url=' + encodeURIComponent(decodeURIComponent(m[1]));
+  }
+  return '/api/cover?url=' + encodeURIComponent(u);
+}
+const KAT={'Dalam Angka':'kat-dna','Statistik Daerah':'kat-sd','PDRB':'kat-pdrb','IPM':'kat-ipm','Kemiskinan':'kat-kms','Ketenagakerjaan':'kat-ktk','Pertanian':'kat-ptr','Kesejahteraan':'kat-ksj','Kecamatan':'kat-kec','Harga & Inflasi':'kat-hi','Potensi Desa':'kat-pd','Lainnya':'kat-lain'};
+function katCls(k){return KAT[k]||'kat-lain'}
+</script>
+</body>
+</html>

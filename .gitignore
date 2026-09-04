@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Large uploads & runtime files (di-host di server, tidak ikut git)
+uploads/
+
+# Debug/probe/screenshot/arsip sementara
+_probe*.js
+_probe*.py
+_probe*.png
+debug-scrape.png
+pager-test.png
+pub-preview.png
+qb-*.txt
+qb-raw.json
+qb-screenshot.png
+
+# File cadangan
+*.bak
+
+# Kredensial admin (dibuat otomatis oleh server saat start)
+db/admin.json
+
+# Excel kerja lokal
+*.xlsx
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*

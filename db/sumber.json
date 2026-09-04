@@ -1,0 +1,42 @@
+{
+  "keterangan": "Registri sumber data yang saling terhubung dengan website ini. Saat admin melakukan pembaruan, data ditarik otomatis dari sumber-sumber BPS berikut.",
+  "sumber": [
+    {
+      "id": "indikator-makro",
+      "nama": "Executive Summary Indikator Makro BPS Kab. Jeneponto",
+      "jenis": "Google Sheets (auto-refresh saat admin update)",
+      "url": "https://s.bps.go.id/7304_indikatormakro",
+      "sheet": "https://docs.google.com/spreadsheets/d/1EHAwV0IL6y9n3K2LhojTM8vXl5-zqQmSZWophthKhrM",
+      "wilayah": "7304 - Kabupaten Jeneponto",
+      "arah": "otomatis",
+      "file": "db/indikator.json + db/tabel-makro.json"
+    },
+    {
+      "id": "publikasi-jeneponto",
+      "nama": "Publikasi BPS Kabupaten Jeneponto",
+      "jenis": "Scrape halaman publikasi (klik 'Import dari BPS' atau Mulai Sinkronisasi)",
+      "url": "https://jenepontokab.bps.go.id/id/publication",
+      "wilayah": "Kabupaten Jeneponto",
+      "arah": "otomatis (tombol import admin)",
+      "file": "db/publikasi.json"
+    },
+    {
+      "id": "publikasi-sulsel",
+      "nama": "Publikasi BPS Provinsi Sulawesi Selatan (sulsel.bps.go.id)",
+      "jenis": "Referensi eksternal wilayah Provinsi atas",
+      "url": "https://sulsel.bps.go.id/id/publication",
+      "wilayah": "73 - Provinsi Sulawesi Selatan",
+      "arah": "tautan eksternal",
+      "file": null
+    },
+    {
+      "id": "webapi",
+      "nama": "Web API BPS (api data statistik)",
+      "jenis": "Referensi data statistik resmi BPS",
+      "url": "https://webapi.bps.go.id",
+      "wilayah": "Nasional / Provinsi / Kabupaten",
+      "arah": "tautan eksternal",
+      "file": null
+    }
+  ]
+}

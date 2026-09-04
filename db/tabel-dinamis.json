@@ -1,0 +1,447 @@
+{
+  "diambilPada": "2026-08-31T03:08:45.715Z",
+  "sumber": "https://jenepontokab.bps.go.id/id/query-builder",
+  "total": 44,
+  "indikator": [
+    {
+      "var_id": 29,
+      "judul": "Penduduk",
+      "subjek": "Kependudukan",
+      "sub_id": 12,
+      "kategori": "Kependudukan dan Migrasi",
+      "definisi": "gambaran penduduk Jeneponto",
+      "catatan": "BPS Jeneponto",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 30,
+      "judul": "Jumlah Penduduk",
+      "subjek": "Kependudukan",
+      "sub_id": 12,
+      "kategori": "Kependudukan dan Migrasi",
+      "definisi": "",
+      "catatan": "BPS Kabupaten Jeneponto",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 32,
+      "judul": "Indeks Pembangunan Manusia (IPM) menurut Jenis Kelamin (menggunakan UHH hasil SP2020 LF)",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 64,
+      "judul": "Indeks Pembangunan Manusia (IPM) menurut Jenis Kelamin (menggunakan UHH hasil SP2010)",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 71,
+      "judul": "[Metode Baru] Umur Harapan Hidup Saat Lahir (UHH) Hasil Long Form SP2020",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Kesehatan",
+      "definisi": "Indeks Pembangunan Manusia (IPM) merupakan indikator komposit yang menggambarkan capaian pembangunan dari tiga dimensi dasar: kesehatan, pendidikan, dan standar hidup layak. Dalam penghitungan IPM terbaru, dimensi kesehatan menggunakan Umur Harapan Hidup (UHH) yang bersumber dari Sensus Penduduk 2020 Long Form (SP2020 LF) sehingga menghasilkan ukuran yang lebih mutakhir dan representatif terhadap kondisi demografi saat ini.",
+      "catatan": "-",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 74,
+      "judul": "[Metode Baru] Harapan Lama Sekolah (HLS)",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Pendidikan",
+      "definisi": "-",
+      "catatan": "-",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 75,
+      "judul": "[Metode Baru] Rata-rata Lama Sekolah (RLS)",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Pendidikan",
+      "definisi": "-",
+      "catatan": "-",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 77,
+      "judul": "[Metode Baru] Indeks Pembangunan Manusia menurut Kabupaten/Kota (Umur Harapan Hidup Hasil Long Form SP2020)",
+      "subjek": "Indeks Pembangunan Manusia",
+      "sub_id": 26,
+      "kategori": "Kependudukan dan Migrasi",
+      "definisi": "-",
+      "catatan": "-",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 62,
+      "judul": "Indeks Pembangunan Gender (IPG) (Menggunakan UHH hasil SP2010)",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 63,
+      "judul": "Indeks Pembangunan Gender (IPG) (Menggunakan UHH hasil SP2020 LF)",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 65,
+      "judul": "Rata-rata Lama Sekolah (RLS) menurut Jenis Kelamin",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 66,
+      "judul": "Harapan Lama Sekolah (HLS) Menurut Jenis Kelamin",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 67,
+      "judul": "Pengeluaran Per Kapita yang Disesuaikan Menurut Jenis Kelamin",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 68,
+      "judul": "\tUmur Harapan Hidup saat lahir menurut Jenis Kelamin (menggunakan UHH hasil SP2020 LF)",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 69,
+      "judul": "\tUmur Harapan Hidup saat lahir menurut Jenis Kelamin (menggunakan UHH hasil SP2010)",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 84,
+      "judul": "Indeks Ketimpangan Gender (IKG) Kabupaten Jeneponto",
+      "subjek": "Indeks Pembangunan Gender",
+      "sub_id": 40,
+      "kategori": "Gender dan Kelompok Populasi Khusus",
+      "definisi": "",
+      "catatan": "- Nilai RSE (Relative Standard Error) MTF di atas ambang batas (&gt;=25%). Perlu kehati-hatian dalam penafsiran datanya&lt;br/&gt;\n- Tanda &quot;-&quot; tidak merepresentasikan ketiadaan kasus (nihil), melainkan nilai hasil pembulatan yang besarnya di bawah unit terkecil yang digunakan dalam penyajian indikator MTF&lt;br/&gt;\n- Termasuk fasilitas kesehatan pada MTF adalah RS Pemerintah/RS Swasta, Rumah Bersalin/Klinik, Puskesmas, Pustu, dan Praktik Nakes&lt;br/&gt;\n- Keterwakilan di Legislatif menggunakan Data dari masing-masing sekretariat DPR, DPRD per Akhir Tahun&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 33,
+      "judul": " PDRB Kabupaten Jeneponto Atas Dasar Harga Berlaku Menurut Lapangan Usaha",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "*** Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 34,
+      "judul": "PDRB Kabupaten Jeneponto Atas Dasar Harga Konstan 2010 Menurut Lapangan Usaha",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "***Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 35,
+      "judul": "Distribusi PDRB Kabupaten Jeneponto Atas Dasar Harga Berlaku Menurut Lapangan Usaha",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "***Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 36,
+      "judul": "Laju Pertumbuhan PDRB Kabupaten Jeneponto Menurut Lapangan Usaha",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "*** Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 38,
+      "judul": "PDRB Kabupaten Jeneponto Atas Dasar Harga Berlaku Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 39,
+      "judul": "PDRB Kabupaten Jeneponto Atas Dasar Harga Konstan Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 40,
+      "judul": "Laju Pertumbuhan PDRB Kabupaten Jeneponto Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "*) laju pertumbuhan tidak ditampilkan\n\nAngka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 41,
+      "judul": "Distribusi PDRB Kabupaten Jeneponto Atas Dasar Harga Berlaku Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "Angka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 42,
+      "judul": "Laju Implisit PDRB Kabupaten Jeneponto Seri 2010 Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "-",
+      "catatan": "*) laju pertumbuhan implisit tidak ditampilkan\n\nAngka Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 43,
+      "judul": "Indeks Implisit PDRB Kabupaten Jeneponto Menurut Lapangan Usaha ",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 44,
+      "judul": "Laju Implisit PDRB Kabupaten Jeneponto Seri 2010 Menurut Lapangan Usaha",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 45,
+      "judul": "Indeks Implisit PDRB Kabupaten Jeneponto Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 51,
+      "judul": "Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Lapangan Usaha Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;b&gt;Cakupan Lapangan Usaha&lt;/b&gt;\n\n&lt;br/&gt;\nSektor Primer: &lt;br/&gt;\nA. Pertanian, Kehutanan, dan Perikanan&lt;br/&gt;\nB. Pertambangan dan Penggalian&lt;br/&gt;\n&lt;br/&gt;\nSektor Sekunder:&lt;br/&gt;\nC. Industri Pengolahan&lt;br/&gt;\nD. Pengadaan Listrik dan Gas&lt;br/&gt;\nE. Pengadaan Air, Pengelolaan Sampah, Limbah dan Daur Ulang&lt;br/&gt;\nF. Konstruksi&lt;br/&gt;\n&lt;br/&gt;\nSektor Tersier:&lt;br/&gt;\nG. Perdagangan Besar dan Eceran; Reparasi Mobil dan Sepeda Motor&lt;br/&gt;\nH. Transportasi dan Pergudangan&lt;br/&gt; \t\nI. Penyediaan Akomodasi dan Makan Minum&lt;br/&gt;\nJ. Informasi dan Komunikasi&lt;br/&gt;\nK. Jasa Keuangan dan Asuransi&lt;br/&gt;\nL. Real Estat&lt;br/&gt;\nM,N. Jasa Perusahaan&lt;br/&gt;\nO. Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial Wajib&lt;br/&gt;\nP. Jasa Pendidikan&lt;br/&gt;\nQ. Jasa Kesehatan dan Kegiatan Sosial&lt;br/&gt;\nR,S,T,U. Jasa Lainnya&lt;br/&gt;\n&lt;br/&gt;",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 52,
+      "judul": "Distribusi Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Lapangan Usaha Atas Dasar Harga Berlaku Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;b&gt;Cakupan Lapangan Usaha&lt;/b&gt;\n\n&lt;br/&gt;\nSektor Primer: &lt;br/&gt;\nA. Pertanian, Kehutanan, dan Perikanan&lt;br/&gt;\nB. Pertambangan dan Penggalian&lt;br/&gt;\n&lt;br/&gt;\nSektor Sekunder:&lt;br/&gt;\nC. Industri Pengolahan&lt;br/&gt;\nD. Pengadaan Listrik dan Gas&lt;br/&gt;\nE. Pengadaan Air, Pengelolaan Sampah, Limbah dan Daur Ulang&lt;br/&gt;\nF. Konstruksi&lt;br/&gt;\n&lt;br/&gt;\nSektor Tersier:&lt;br/&gt;\nG. Perdagangan Besar dan Eceran; Reparasi Mobil dan Sepeda Motor&lt;br/&gt;\nH. Transportasi dan Pergudangan&lt;br/&gt; \t\nI. Penyediaan Akomodasi dan Makan Minum&lt;br/&gt;\nJ. Informasi dan Komunikasi&lt;br/&gt;\nK. Jasa Keuangan dan Asuransi&lt;br/&gt;\nL. Real Estat&lt;br/&gt;\nM,N. Jasa Perusahaan&lt;br/&gt;\nO. Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial Wajib&lt;br/&gt;\nP. Jasa Pendidikan&lt;br/&gt;\nQ. Jasa Kesehatan dan Kegiatan Sosial&lt;br/&gt;\nR,S,T,U. Jasa Lainnya&lt;br/&gt;\n&lt;br/&gt;",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 56,
+      "judul": "Laju Pertumbuhan Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Lapangan Usaha Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;b&gt;Cakupan Lapangan Usaha&lt;/b&gt;\n\n&lt;br/&gt;\nSektor Primer: &lt;br/&gt;\nA. Pertanian, Kehutanan, dan Perikanan&lt;br/&gt;\nB. Pertambangan dan Penggalian&lt;br/&gt;\n&lt;br/&gt;\nSektor Sekunder:&lt;br/&gt;\nC. Industri Pengolahan&lt;br/&gt;\nD. Pengadaan Listrik dan Gas&lt;br/&gt;\nE. Pengadaan Air, Pengelolaan Sampah, Limbah dan Daur Ulang&lt;br/&gt;\nF. Konstruksi&lt;br/&gt;\n&lt;br/&gt;\nSektor Tersier:&lt;br/&gt;\nG. Perdagangan Besar dan Eceran; Reparasi Mobil dan Sepeda Motor&lt;br/&gt;\nH. Transportasi dan Pergudangan&lt;br/&gt; \t\nI. Penyediaan Akomodasi dan Makan Minum&lt;br/&gt;\nJ. Informasi dan Komunikasi&lt;br/&gt;\nK. Jasa Keuangan dan Asuransi&lt;br/&gt;\nL. Real Estat&lt;br/&gt;\nM,N. Jasa Perusahaan&lt;br/&gt;\nO. Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial Wajib&lt;br/&gt;\nP. Jasa Pendidikan&lt;br/&gt;\nQ. Jasa Kesehatan dan Kegiatan Sosial&lt;br/&gt;\nR,S,T,U. Jasa Lainnya&lt;br/&gt;\n&lt;br/&gt;",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 57,
+      "judul": "Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Pengeluaran Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;br/&gt;\nLainnya: Konsumsi Lembaga Nonprofit yang Melayani Rumah Tangga (PK-LNPRT) + Perubahan Inventori (PI) + Net Ekspor (Ekspor-Impor) &lt;br/&gt;",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 58,
+      "judul": "Distribusi Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Pengeluaran Atas Dasar Harga Berlaku Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;br/&gt;\nLainnya: Konsumsi Lembaga Nonprofit yang Melayani Rumah Tangga (PK-LNPRT) + Perubahan Inventori (PI) + Net Ekspor (Ekspor-Impor) &lt;br/&gt;\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya&lt;br/&gt;\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya&lt;br/&gt;\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya\n&lt;br/&gt;\n",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 59,
+      "judul": "Laju Pertumbuhan Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Pengeluaran Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "&lt;br/&gt;\nLainnya: Konsumsi Lembaga Nonprofit yang Melayani Rumah Tangga (PK-LNPRT) + Perubahan Inventori (PI) + Net Ekspor (Ekspor-Impor) &lt;br/&gt;\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya&lt;br/&gt;\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya&lt;br/&gt;\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya\n&lt;br/&gt;",
+      "catatan": "2022: *Angka Sementara&lt;br/&gt;\n2023: **Angka Sangat Sementara&lt;br/&gt;\n2024: ***Angka Sangat-sangat Sementara&lt;br/&gt;\n&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 79,
+      "judul": "Distribusi Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut Pengeluaran Atas Dasar Harga Konstan Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "Lainnya: Konsumsi Lembaga Nonprofit yang Melayani Rumah Tangga (PK-LNPRT) + Perubahan Inventori (PI) + Net Ekspor (Ekspor-Impor)\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya",
+      "catatan": "2022: *Angka Sementara\n2023: **Angka Sangat Sementara\n2024: ***Angka Sangat-sangat Sementara",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 81,
+      "judul": "Pertumbuhan Indeks Implisit PDRB Triwulanan Kabupaten Jeneponto Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 82,
+      "judul": "Sumber Pertumbuhan PDRB Triwulanan Kabupaten Jeneponto Menurut Pengeluaran",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "Lainnya: Konsumsi Lembaga Nonprofit yang Melayani Rumah Tangga (PK-LNPRT) + Perubahan Inventori (PI) + Net Ekspor (Ekspor-Impor)\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 85,
+      "judul": "Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut 6 Komponen Pengeluaran Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 86,
+      "judul": "Distribusi Produk Domestik Regional Bruto (PDRB) Triwulanan Atas Dasar Harga Berlaku Menurut 6 Komponen Pengeluaran Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 87,
+      "judul": "Laju Pertumbuhan Produk Domestik Regional Bruto (PDRB) Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut 6 Komponen Pengeluaran Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya&lt;br/&gt;\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya&lt;br/&gt;\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 88,
+      "judul": "Produk Domestik Regional Bruto (PDRB) Triwulanan Menurut 17 Kategori Lapangan Usaha Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 89,
+      "judul": "Distribusi Produk Domestik Regional Bruto (PDRB) Triwulanan Atas Dasar Harga Berlaku Menurut 17 Kategori Lapangan Usaha Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 90,
+      "judul": "Laju Pertumbuhan Produk Domestik Regional Bruto (PDRB) Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut 17 Kategori Lapangan Usaha Kabupaten Jeneponto",
+      "subjek": "Produk Domestik Regional Bruto",
+      "sub_id": 52,
+      "kategori": "Neraca Ekonomi",
+      "definisi": "",
+      "catatan": "2026: ***Angka Sangat-sangat Sementara&lt;br/&gt;\nq-to-q: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan sebelumnya&lt;br/&gt;\ny-on-y: PDRB atas dasar harga konstan 2010 pada suatu triwulan dibandingkan dengan triwulan yang sama tahun sebelumnya&lt;br/&gt;\nc-to-c: PDRB atas dasar harga konstan 2010 kumulatif sampai dengan triwulan dibandingkan periode kumulatif yang sama pada tahun sebelumnya&lt;br/&gt;",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    },
+    {
+      "var_id": 31,
+      "judul": "Luas Wilayah",
+      "subjek": "Geografi",
+      "sub_id": 155,
+      "kategori": "Statistik sektoral",
+      "definisi": "Luas wilayah Kabupaten Jeneponto tercatat 749,79 km2 yang meliputi 11 kecamatan",
+      "catatan": "",
+      "url_bps": "https://jenepontokab.bps.go.id/id/query-builder"
+    }
+  ]
+}
