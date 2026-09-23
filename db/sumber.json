@@ -23,11 +23,29 @@
     {
       "id": "publikasi-sulsel",
       "nama": "Publikasi BPS Provinsi Sulawesi Selatan (sulsel.bps.go.id)",
-      "jenis": "Referensi eksternal wilayah Provinsi atas",
-      "url": "https://sulsel.bps.go.id/id/publication",
+      "jenis": "Scrape halaman publikasi (770 judul)",
+      "url": "https://sulsel.bps.go.id/publication.html",
       "wilayah": "73 - Provinsi Sulawesi Selatan",
-      "arah": "tautan eksternal",
-      "file": null
+      "arah": "otomatis",
+      "file": "db/publikasi-sulsel.json"
+    },
+    {
+      "id": "indikator-sulsel",
+      "nama": "Indikator Makro Sosial Ekonomi Provinsi Sulawesi Selatan",
+      "jenis": "Ekstraksi dari publikasi Indikator Makro Sosial Ekonomi Sulsel TW2 2026 (BPS)",
+      "url": "https://sulsel.bps.go.id",
+      "wilayah": "73 - Provinsi Sulawesi Selatan",
+      "arah": "otomatis",
+      "file": "db/indikator-sulsel.json"
+    },
+    {
+      "id": "kabupaten-sulsel",
+      "nama": "Data 24 Kabupaten/Kota Provinsi Sulawesi Selatan",
+      "jenis": "Ekstraksi dari Provinsi Sulawesi Selatan Dalam Angka 2026 & Indikator Makro TW2 2026",
+      "url": "https://sulsel.bps.go.id",
+      "wilayah": "24 kabupaten/kota di Provinsi Sulawesi Selatan",
+      "arah": "otomatis",
+      "file": "db/kabupaten-sulsel.json"
     },
     {
       "id": "webapi",

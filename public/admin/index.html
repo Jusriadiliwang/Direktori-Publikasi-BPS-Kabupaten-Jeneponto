@@ -280,6 +280,11 @@ tr:hover td{background:var(--gray50)}
       <div class="card">
         <div class="tbl-filters">
           <input class="search-tbl" id="tblQ" type="text" placeholder="Cari judul…" oninput="tblFilter()"/>
+          <select class="tbl-sel" id="tblWil" onchange="tblFilter()">
+            <option value="">Semua Wilayah</option>
+            <option value="jeneponto">Kab. Jeneponto</option>
+            <option value="sulsel">Prov. Sulawesi Selatan</option>
+          </select>
           <select class="tbl-sel" id="tblKat" onchange="tblFilter()"><option value="">Semua Kategori</option></select>
           <select class="tbl-sel" id="tblThn" onchange="tblFilter()"><option value="">Semua Tahun</option></select>
         </div>
@@ -574,11 +579,15 @@ async function loadDashboard() {
 
 // ══ PUBLIKASI ══════════════════════════════════════════════════
 async function loadPub() {
-  const j = await apiGet('/api/admin/publikasi');
-  pubData = j.data || [];
+  const [j, js] = await Promise.all([
+    apiGet('/api/admin/publikasi'),
+    apiGet('/api/admin/publikasi-sulsel'),
+  ]);
+  pubData = [...(j.data||[]), ...(js.data||[])].map(p => ({ ...p, lokal: !!p.lokal || !!p.fileLokal }));
   pubMap.clear();
   pubData.forEach(p => pubMap.set(String(p.id), p));
-  document.getElementById('pubSub').textContent = `${j.total} publikasi`;
+  const total = pubData.length;
+  document.getElementById('pubSub').textContent = `${total} publikasi (${j.total} Jeneponto · ${js.total} Sulsel)`;
   // Dropdowns
   const kats = [...new Set(pubData.map(p=>p.kategori).filter(Boolean))].sort();
   const thns = [...new Set(pubData.map(p=>p.tahun).filter(Boolean))].sort((a,b)=>b-a);
@@ -591,10 +600,12 @@ function tblFilter() {
   const q   = document.getElementById('tblQ').value.toLowerCase();
   const kat = document.getElementById('tblKat').value;
   const thn = document.getElementById('tblThn').value;
+  const wil = document.getElementById('tblWil').value;
   pubFilt = pubData.filter(p =>
     (!q   || p.judul?.toLowerCase().includes(q)) &&
     (!kat || p.kategori===kat) &&
-    (!thn || String(p.tahun)===thn)
+    (!thn || String(p.tahun)===thn) &&
+    (!wil || p.wilayah===wil)
   );
   pubPage=1; renderPubTable();
 }
@@ -607,7 +618,7 @@ function renderPubTable() {
   document.getElementById('tblPubBody').innerHTML = items.map(p => `
     <tr>
       <td>${cvr(p.cover)?`<img class="td-cover" src="${esc(cvr(p.cover))}" loading="lazy">`:'<div class="td-cover-ph">📄</div>'}</td>
-      <td class="td-title"><strong>${esc(p.judul)}</strong><span>${esc(p.tanggal||'')}${p.lokal?' <em style="color:var(--green)">• Lokal</em>':''}</span></td>
+      <td class="td-title"><strong>${esc(p.judul)}</strong><span>${esc(p.tanggal||'')}${p.lokal?' <em style="color:var(--green)">• Lokal</em>':''} <em style="color:${p.wilayah==='sulsel'?'#7c3aed':'#0ea5e9'};font-style:normal;font-size:.68rem;font-weight:700;border:1px solid currentColor;border-radius:99px;padding:0 6px">${p.wilayah==='sulsel'?'SULSEL':'JENEPONTO'}</em></span></td>
       <td><span class="kat-badge ${katCls(p.kategori)}">${esc(p.kategori)}</span></td>
       <td>${p.tahun||'–'}</td>
       <td>
@@ -704,7 +715,8 @@ function simpanPub() {
 
   // Gunakan XHR untuk progress bar
   const xhr = new XMLHttpRequest();
-  const apiUrl = id ? `/api/admin/publikasi/${id}` : '/api/admin/publikasi';
+  const apiBase  = (id && id.startsWith('sulsel-')) ? '/api/admin/publikasi-sulsel' : '/api/admin/publikasi';
+  const apiUrl   = id ? `${apiBase}/${id}` : '/api/admin/publikasi';
   xhr.open(id ? 'PUT' : 'POST', apiUrl);
   xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 
@@ -757,7 +769,9 @@ function konfirmHapus(id, jenis) {
   document.getElementById('confirmTitle').textContent = jenis==='pub' ? 'Hapus Publikasi' : 'Hapus User';
   document.getElementById('confirmMsg').textContent   = 'Apakah Anda yakin? Tindakan ini tidak dapat dibatalkan.';
   document.getElementById('btnConfirmOk').onclick = async () => {
-    const url  = jenis==='pub' ? `/api/admin/publikasi/${id}` : `/api/admin/users/${id}`;
+    const url  = jenis==='pub'
+      ? (String(id).startsWith('sulsel-') ? `/api/admin/publikasi-sulsel/${id}` : `/api/admin/publikasi/${id}`)
+      : `/api/admin/users/${id}`;
     const r    = await fetch(url, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
     const j    = await r.json();
     tutupModal('modalConfirm');

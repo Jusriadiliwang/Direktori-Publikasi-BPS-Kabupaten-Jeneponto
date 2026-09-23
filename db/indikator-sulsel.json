@@ -1,0 +1,279 @@
+{
+  "Tahunan": [
+    [
+      "Indikator",
+      "Satuan",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026"
+    ],
+    [
+      "Jumlah Penduduk",
+      "ribu jiwa",
+      "9.073,51",
+      "",
+      "",
+      "",
+      "",
+      "9.563,13",
+      "9.661,30"
+    ],
+    [
+      "Penduduk Laki-laki",
+      "ribu jiwa",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "4.800,82"
+    ],
+    [
+      "Penduduk Perempuan",
+      "ribu jiwa",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "4.860,47"
+    ],
+    [
+      "Laju Pertumbuhan Penduduk",
+      "persen",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "1,09"
+    ],
+    [
+      "Kepadatan Penduduk",
+      "jiwa per km2",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "213"
+    ],
+    [
+      "Rasio Jenis Kelamin",
+      "rasio",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "98,77"
+    ],
+    [
+      "Rasio Ketergantungan",
+      "rasio",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "45,10"
+    ],
+    [
+      "Jumlah Penduduk Miskin",
+      "ribu jiwa",
+      "",
+      "765,46",
+      "782,32",
+      "",
+      "736,48",
+      "698,13",
+      "669,63"
+    ],
+    [
+      "Persentase Penduduk Miskin",
+      "persen",
+      "",
+      "8,53",
+      "8,66",
+      "",
+      "8,06",
+      "7,60",
+      "7,24"
+    ],
+    [
+      "Garis Kemiskinan",
+      "rupiah per kapita per bulan",
+      "",
+      "",
+      "",
+      "459226",
+      "",
+      "477966",
+      "542095"
+    ],
+    [
+      "Indeks Pembangunan Manusia",
+      "indeks",
+      "",
+      "",
+      "73,96",
+      "74,60",
+      "75,18",
+      "75,92",
+      ""
+    ],
+    [
+      "Tingkat Partisipasi Angkatan Kerja",
+      "persen",
+      "",
+      "64,73",
+      "66,18",
+      "65,66",
+      "67,38",
+      "67,65",
+      ""
+    ],
+    [
+      "Tingkat Pengangguran Terbuka",
+      "persen",
+      "",
+      "5,72",
+      "4,51",
+      "4,33",
+      "4,19",
+      "4,21",
+      ""
+    ],
+    [
+      "Tingkat Partisipasi Angkatan Kerja (Februari)",
+      "persen",
+      "",
+      "",
+      "65,85",
+      "64,37",
+      "65,41",
+      "65,99",
+      "67,59"
+    ],
+    [
+      "Tingkat Pengangguran Terbuka (Februari)",
+      "persen",
+      "",
+      "",
+      "5,75",
+      "5,26",
+      "4,90",
+      "4,96",
+      "4,95"
+    ],
+    [
+      "Angkatan Kerja",
+      "orang",
+      "",
+      "4412782",
+      "4559375",
+      "4694483",
+      "4885688",
+      "4968027",
+      ""
+    ],
+    [
+      "Penduduk Bekerja",
+      "orang",
+      "",
+      "4160433",
+      "4353650",
+      "4490983",
+      "4680928",
+      "4759077",
+      ""
+    ],
+    [
+      "Pengangguran Terbuka",
+      "orang",
+      "",
+      "252349",
+      "205725",
+      "203500",
+      "204760",
+      "208950",
+      ""
+    ],
+    [
+      "PDRB perkapita",
+      "juta rupiah",
+      "",
+      "59,50",
+      "65,35",
+      "69,71",
+      "73,57",
+      "78,75",
+      ""
+    ],
+    [
+      "Laju Pertumbuhan Ekonomi",
+      "persen",
+      "-0,71",
+      "4,64",
+      "5,09",
+      "4,51",
+      "5,02",
+      "5,43",
+      ""
+    ],
+    [
+      "PDRB Atas Dasar Harga Berlaku",
+      "miliar rupiah",
+      "",
+      "",
+      "",
+      "",
+      "693581,33",
+      "749832,25",
+      ""
+    ],
+    [
+      "PDRB Atas Dasar Harga Konstan",
+      "miliar rupiah",
+      "",
+      "",
+      "",
+      "",
+      "394265,08",
+      "415483,56",
+      ""
+    ],
+    [
+      "Gini Rasio (Maret)",
+      "rasio",
+      "",
+      "",
+      "",
+      "0,377",
+      "0,363",
+      "0,363",
+      "0,355"
+    ],
+    [
+      "Gini Rasio (September)",
+      "rasio",
+      "",
+      "0,377",
+      "0,365",
+      "",
+      "0,360",
+      "0,350",
+      ""
+    ]
+  ]
+}

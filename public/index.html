@@ -255,6 +255,7 @@ footer a:hover{color:var(--white)}
       <div class="search-dropdown" id="searchDropdown"></div>
     </div>
     <p class="search-hint" id="searchHint">Cari "jumlah penduduk", "IPM", "PDRB", "kemiskinan"…</p>
+    <p style="margin-top:12px"><a id="regionLink" href="#" style="color:#93c5fd;text-decoration:underline;font-size:.8rem"></a></p>
   </div>
 </section>
 
@@ -391,6 +392,14 @@ const KAT_MAP = {
 };
 
 // ── State ──────────────────────────────────────────────────────
+// Mode wilayah: '/sulsel' atau '?wilayah=sulsel' → halaman publikasi BPS Sulawesi Selatan
+const REGION = (location.pathname.startsWith('/sulsel') || new URLSearchParams(location.search).get('wilayah') === 'sulsel') ? 'sulsel' : 'jeneponto';
+const RS = REGION === 'sulsel'
+  ? { label:'BPS Provinsi Sulawesi Selatan', domain:'sulsel.bps.go.id', link:'https://sulsel.bps.go.id', indikator:'Indikator Makro BPS Prov. Sulawesi Selatan' }
+  : { label:'BPS Kabupaten Jeneponto',        domain:'jenepontokab.bps.go.id', link:'https://jenepontokab.bps.go.id', indikator:'Indikator Makro BPS Kab. Jeneponto' };
+const PUB_API  = REGION === 'sulsel' ? '/api/publikasi-sulsel' : '/api/publikasi';
+const STAT_AP  = REGION === 'sulsel' ? '/api/stats-sulsel'     : '/api/stats';
+
 let allData    = [];
 let filtered   = [];
 let curPage    = 1;
@@ -404,14 +413,28 @@ let searchTimer;
 // ── Init ───────────────────────────────────────────────────────
 (async () => {
   document.getElementById('loader').classList.add('active');
+
+  // Teks dinamis sesuai wilayah
+  document.title = 'Direktori Publikasi ' + RS.label;
+  const h1sp = document.querySelector('.hero-content h1 span'); if (h1sp) h1sp.textContent = RS.label;
+  const heroTxt = document.querySelector('.hero-content p');     if (heroTxt) heroTxt.textContent = `Cari data statistik, nilai indikator, dan publikasi ${RS.label}`;
+  const rl = document.getElementById('regionLink');
+  if (rl) {
+    rl.href = REGION === 'sulsel' ? '/' : '/sulsel';
+    rl.textContent = REGION === 'sulsel' ? '← Kembali ke Publikasi BPS Jeneponto' : 'Lihat Publikasi BPS Sulawesi Selatan →';
+  }
+  const fl = document.querySelector('footer strong');            if (fl) fl.textContent = RS.label;
+  const fa = document.querySelectorAll('footer p')[1];           if (fa) fa.textContent = REGION === 'sulsel' ? 'Jl. Haji Bau Nomor 6, Makassar, Sulawesi Selatan 90125' : 'Jl. Sultan Hasanuddin No. 58, Jeneponto, Sulawesi Selatan 92311';
+  const flk = document.querySelector('footer a');                if (flk) { flk.textContent = RS.domain; flk.href = RS.link; }
+
   try {
     // Muat semua data sekaligus
-    const r = await fetch('/api/publikasi?limit=9999');
+    const r = await fetch(`${PUB_API}?limit=9999`);
     const j = await r.json();
     allData = j.data;
 
     // Stats
-    const sr = await fetch('/api/stats');
+    const sr = await fetch(STAT_AP);
     const sj = await sr.json();
     document.getElementById('stTotal').textContent  = sj.total.toLocaleString('id');
     document.getElementById('stKat').textContent    = sj.totalKategori;
@@ -472,7 +495,7 @@ async function cariUniversal(q) {
   dd.classList.add('show');
 
   try {
-    const r    = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const r    = await fetch(`/api/search?q=${encodeURIComponent(q)}&wilayah=${REGION}`);
     const data = await r.json();
     renderDropdown(data);
   } catch {
@@ -495,8 +518,8 @@ function renderDropdown(data) {
 
   let html = '';
 
-  // ── DATA KECAMATAN ──
-  if (kecamatan && kecamatan.length) {
+  // ── DATA KECAMATAN (hanya Jeneponto) ──
+  if (REGION === 'jeneponto' && kecamatan && kecamatan.length) {
     html += `<div class="sd-section">
       <div class="sd-section-title">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -548,7 +571,7 @@ function renderDropdown(data) {
 
       <div class="sd-section-title">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Data Statistik Kabupaten Jeneponto
+        Data Statistik ${RS.label}
       </div>`;
 
     html += indikatorMakro.map(v => {

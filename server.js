@@ -6,11 +6,13 @@
 const express  = require('express');
 const path     = require('path');
 const fs       = require('fs');
+const crypto   = require('crypto');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const multer   = require('multer');
 const { chromium } = require('playwright');
 const { refreshIndikator } = require('./refresh-indikator');
+const pdfIndexer = require('./pdf-indexer');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +35,12 @@ const INDIK_FILE = path.join(DB_DIR, 'indikator.json');
 const KECAM_FILE = path.join(DB_DIR, 'kecamatan.json');
 const PDF_INDEX_FILE = path.join(DB_DIR, 'pdf-index.json');
 const SUMBER_FILE = path.join(DB_DIR, 'sumber.json');
+const SULSEL_PUB_FILE = path.join(DB_DIR, 'publikasi-sulsel.json');
+const SULSEL_INDIK_FILE = path.join(DB_DIR, 'indikator-sulsel.json');
+const SULSEL_KAB_FILE = path.join(DB_DIR, 'kabupaten-sulsel.json');
+const SULSEL_PDF_INDEX_FILE = path.join(DB_DIR, 'pdf-index-sulsel.json');
+const UPLOAD_PDF_INDEX_FILE = path.join(DB_DIR, 'pdf-index-upload.json');
+const SULSEL_DL_DIR = path.join(__dirname, 'downloads', 'sulsel');
 const BASE_URL   = 'https://jenepontokab.bps.go.id/id/publication';
 
 // ── Seed data awal dari repo ke folder data persisten ────────────
@@ -108,6 +116,13 @@ function requireAdmin(req, res, next) {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(UPLOAD_DIR)));
+// Halaman terpisah Publikasi BPS Sulawesi Selatan
+app.get('/sulsel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// File publikasi Sulsel yang diunduh ke folder lokal downloads/sulsel
+// disajikan juga di /uploads/sulsel-files agar link "buka file" bekerja.
+if (fs.existsSync(SULSEL_DL_DIR)) {
+  app.use('/uploads/sulsel-files', express.static(SULSEL_DL_DIR));
+}
 
 // ══════════════════════════════════════════════════════
 // AUTH: REGISTER & LOGIN (untuk user biasa)
@@ -182,8 +197,35 @@ function getPdfIndex() {
   return _pdfIndexCache;
 }
 
+// ── Index PDF hasil upload admin (otomatis, selalu dicari) ────────
+let _uploadIndexCache = null;
+function bacaUploadIndex() {
+  if (_uploadIndexCache) return _uploadIndexCache;
+  if (!fs.existsSync(UPLOAD_PDF_INDEX_FILE)) return [];
+  try { _uploadIndexCache = baca(UPLOAD_PDF_INDEX_FILE); } catch { _uploadIndexCache = []; }
+  return _uploadIndexCache;
+}
+
+function resetPdfCaches() {
+  _pdfIndexCache = null;
+  _uploadIndexCache = null;
+  _pdfIndexSulselCache = null;
+}
+
+// Gabung sumber index (statis + hasil upload) tanpa duplikat per file.
+function sumberPdf(own) {
+  const up = bacaUploadIndex();
+  if (!up.length) return own;
+  const seen = new Set(); const out = [];
+  for (const d of [...(own || []), ...up]) {
+    if (!d || seen.has(d.file)) continue;
+    seen.add(d.file); out.push(d);
+  }
+  return out;
+}
+
 function cariDalamPDF(keyword, maks = 4) {
-  const index = getPdfIndex();
+  const index = sumberPdf(getPdfIndex());
   if (!index.length) return [];
   const kwWords = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
   if (!kwWords.length) return [];
@@ -213,6 +255,83 @@ function cariDalamPDF(keyword, maks = 4) {
   return hasil.sort((a, b) => b.skor - a.skor).slice(0, maks);
 }
 
+// ── PDF Index Sulsel ────────────────────────────────────────────
+let _pdfIndexSulselCache = null;
+function getPdfIndexSulsel() {
+  if (_pdfIndexSulselCache) return _pdfIndexSulselCache;
+  if (!fs.existsSync(SULSEL_PDF_INDEX_FILE)) return [];
+  try { _pdfIndexSulselCache = baca(SULSEL_PDF_INDEX_FILE); } catch { _pdfIndexSulselCache = []; }
+  return _pdfIndexSulselCache;
+}
+
+function cariDalamPDFSulsel(keyword, maks = 4) {
+  const index = sumberPdf(getPdfIndexSulsel());
+  if (!index.length) return [];
+  const kwWords = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  if (!kwWords.length) return [];
+
+  const hasil = [];
+  for (const doc of index) {
+    let bestChunk = '', bestScore = 0;
+    for (const chunk of (doc.chunks || [])) {
+      const cl = chunk.toLowerCase();
+      const score = kwWords.reduce((s, w) => s + (cl.includes(w) ? 1 : 0), 0);
+      if (score > bestScore) { bestScore = score; bestChunk = chunk; }
+    }
+    if (bestScore >= 1) {
+      const sents = bestChunk.split(/(?<=[.;])\s+/);
+      const rel   = sents.find(s => kwWords.some(w => s.toLowerCase().includes(w))) || sents[0] || '';
+      hasil.push({
+        judul    : doc.judul,
+        tahun    : doc.tahun,
+        fileLokal: doc.fileLokal || null,
+        url_bps  : doc.url_bps  || '',
+        cover    : doc.cover    || '',
+        snippet  : rel.trim().substring(0, 280),
+        skor     : bestScore
+      });
+    }
+  }
+  return hasil.sort((a, b) => b.skor - a.skor).slice(0, maks);
+}
+
+// ── Peta sumber publikasi untuk tiap kategori indikator ──────
+const SUMBER_MAP = {
+  'miskin'        : ['kemiskinan','statistik daerah','kesejahteraan'],
+  'kemiskinan'    : ['kemiskinan','statistik daerah'],
+  'penduduk'      : ['dalam angka','statistik daerah'],
+  'pdrb'          : ['pdrb','produk domestik','lapangan usaha'],
+  'ipm'           : ['pembangunan manusia','statistik daerah','dalam angka'],
+  'tpak'          : ['ketenagakerjaan','dalam angka'],
+  'pengangguran'  : ['ketenagakerjaan','dalam angka'],
+  'angkatan kerja': ['ketenagakerjaan','dalam angka'],
+  'gini'          : ['statistik daerah','kesejahteraan'],
+  'inflasi'       : ['inflasi','harga','statistik daerah'],
+  'pertanian'     : ['pertanian','hortikultura','statistik daerah'],
+  'ipg'           : ['gender','dalam angka','statistik daerah'],
+  'harapan hidup' : ['pembangunan manusia','statistik daerah'],
+  'sekolah'       : ['pembangunan manusia','statistik daerah'],
+  'default'       : ['dalam angka','statistik daerah'],
+};
+
+// Temukan publikasi sumber paling relevan untuk sebuah indikator.
+// Mengembalikan objek publikasi PENUH (ikut fileLokal, url, cover).
+function cariSumberIndikator(namaIndikator, allPub) {
+  const n = String(namaIndikator || '').toLowerCase();
+  let kwList = SUMBER_MAP['default'];
+  for (const [key, kws] of Object.entries(SUMBER_MAP)) {
+    if (key !== 'default' && n.includes(key)) { kwList = kws; break; }
+  }
+  for (const kw of kwList) {
+    const match = allPub.find(p =>
+      (p.judul || '').toLowerCase().includes(kw) ||
+      (p.deskripsi || '').toLowerCase().includes(kw)
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
 app.post('/api/chat', (req, res) => {
   const pesan = (req.body.pesan || req.body.q || '').trim();
   if (!pesan) return res.json({ ok: false, error: 'Pesan kosong' });
@@ -226,9 +345,16 @@ app.post('/api/chat', (req, res) => {
 
   // ── Helper: format angka ──────────────────────────────
   function fmt(n) {
-    const s = String(n || '').trim().replace(/\s/g, '');
-    const f = parseFloat(s.replace(/,/g, '.'));
-    return isNaN(f) ? s : f.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    if (typeof n === 'number') {
+      return n.toLocaleString('id-ID', { maximumFractionDigits: 3 });
+    }
+    const s = String(n == null || n === '' ? '' : n).trim().replace(/\s/g, '');
+    if (!s) return s;
+    const hasComma = s.includes(',');
+    let f;
+    if (hasComma)      f = parseFloat(s.replace(/\./g, '').replace(',', '.'));
+    else               f = parseFloat(s);
+    return isNaN(f) ? s : f.toLocaleString('id-ID', { maximumFractionDigits: 3 });
   }
 
   // ── Helper: cari indikator ────────────────────────────
@@ -316,6 +442,279 @@ app.post('/api/chat', (req, res) => {
   const isDesa      = /\b(desa|kelurahan|potensi\s+desa|jumlah\s+desa|podes)\b/i.test(pesan);
   const isPertanian = /\b(pertanian|tanaman|pangan|hortikultura|ternak|peternakan|perikanan|nelayan|padi|jagung|ubi|singkong|kelapa|kakao)\b/i.test(pesan);
 
+  // ═══ 0. MODE SULAWESI SELATAN (sulsel.bps.go.id) ═════════════
+  // Pertanyaan tentang Provinsi Sulawesi Selatan / 24 kabupaten-kota
+  // dijawab dari dataset db/publikasi-sulsel.json, db/indikator-sulsel.json,
+  // db/kabupaten-sulsel.json, db/pdf-index-sulsel.json. Jeneponto dikecualikan
+  // (tetap dilayani oleh logika Jeneponto di bawah).
+  const SULSEL_ALIAS = [
+    ['kepulauan selayar', 'Kepulauan Selayar'], ['selayar', 'Kepulauan Selayar'],
+    ['bulukumba', 'Bulukumba'], ['bantaeng', 'Bantaeng'], ['jeneponto', 'Jeneponto'],
+    ['takalar', 'Takalar'], ['gowa', 'Gowa'], ['sinjai', 'Sinjai'], ['maros', 'Maros'],
+    ['pangkajene dan kepulauan', 'Pangkajene Dan Kepulauan'], ['pangkajene', 'Pangkajene Dan Kepulauan'], ['pangkep', 'Pangkajene Dan Kepulauan'],
+    ['barru', 'Barru'], ['bone', 'Bone'], ['soppeng', 'Soppeng'], ['wajo', 'Wajo'],
+    ['sidenreng rappang', 'Sidenreng Rappang'], ['sidenreng', 'Sidenreng Rappang'], ['sidrap', 'Sidenreng Rappang'],
+    ['pinrang', 'Pinrang'], ['enrekang', 'Enrekang'],
+    ['luwu utara', 'Luwu Utara'], ['luwu timur', 'Luwu Timur'], ['luwu', 'Luwu'],
+    ['tana toraja', 'Tana Toraja'], ['toraja utara', 'Toraja Utara'],
+    ['makassar', 'Kota Makassar'], ['parepare', 'Kota Parepare'], ['palopo', 'Kota Palopo'],
+  ];
+  const SULSEL_ALIAS_SORT = [...SULSEL_ALIAS].sort((a, b) => b[0].length - a[0].length);
+  function matchKabSulsel(t) {
+    const L = (' ' + t.toLowerCase() + ' ');
+    for (const [k, long] of SULSEL_ALIAS_SORT) {
+      const rx = new RegExp('\\b' + k.replace(/\s+/g, '[\\s._-]+') + '\\b');
+      if (rx.test(L)) return long;
+    }
+    return null;
+  }
+
+  const matchedKab  = matchKabSulsel(pesan);
+  const isSulsel    = /\b(sulsel|sulawesi\s*selatan|sulawesi)\b/i.test(pesan) ||
+                      (matchedKab && matchedKab !== 'Jeneponto');
+
+  if (isSulsel) {
+    const sulsulKab = fs.existsSync(SULSEL_KAB_FILE) ? baca(SULSEL_KAB_FILE) : [];
+    const sulsulPub = fs.existsSync(SULSEL_PUB_FILE) ? baca(SULSEL_PUB_FILE) : [];
+    const sulsulInd = getIndikatorSulsel();
+
+    function cariPubSulsel(keyword, maks = 5) {
+      const stop = new Set(['sulsel','sulawesi','selatan','provinsi','dan','atau','yang','di','dari','untuk','dengan','ke','pada','oleh','ini','itu','tahun','buku','revisi','bagus','lebih','dapat','menurut','kabupaten','kota']);
+      const kw = keyword.toLowerCase().replace(/[?!.,;:()]/g, ' ').split(/\s+/)
+        .filter(w => w.length > 2 && !stop.has(w));
+      if (!kw.length) return [];
+      return sulsulPub.filter(p => {
+        const txt = ((p.judul || '') + ' ' + (p.deskripsi || '')).toLowerCase();
+        return kw.some(w => txt.includes(w));
+      }).sort((a, b) => {
+        const ta = ((a.judul || '') + (a.deskripsi || '')).toLowerCase();
+        const tb = ((b.judul || '') + (b.deskripsi || '')).toLowerCase();
+        return kw.filter(w => tb.includes(w)).length - kw.filter(w => ta.includes(w)).length;
+      }).slice(0, maks).map(p => ({
+        judul: p.judul, tahun: p.tahun, url: p.url, cover: p.cover || '', ukuran: p.ukuran || ''
+      }));
+    }
+
+    const SIN_SUL = {
+      'tingkat kemiskinan': 'penduduk miskin', 'angka kemiskinan': 'penduduk miskin', 'kemiskinan': 'penduduk miskin',
+      'ipm': 'indeks pembangunan manusia',
+      'tpt': 'tingkat pengangguran', 'tingkat pengangguran': 'pengangguran terbuka',
+      'tpak': 'partisipasi angkatan kerja',
+      'uhh': 'umur harapan hidup', 'hls': 'harapan lama sekolah', 'rls': 'rata-rata lama sekolah',
+      'pertumbuhan ekonomi': 'laju pertumbuhan ekonomi', 'pertumbuhan pdrb': 'laju pertumbuhan ekonomi',
+      'pertumbuhan': 'laju pertumbuhan ekonomi',
+      'gini': 'gini rasio', 'pdrb per kapita': 'pdrb perkapita', 'pdrb perkapita': 'pdrb perkapita',
+      'jumlah penduduk': 'jumlah penduduk', 'penduduk': 'jumlah penduduk',
+    };
+    function normSul(kw) {
+      let h = kw.toLowerCase().replace(/[?!.,;:()"']/g, ' ').replace(/\b20\d{2}\b/g, ' ')
+        .replace(/\b(sulsel|sulawesi|selatan|provinsi|prov|kabupaten|kab|kota|terbaru|terakhir|sekarang|saat ini|tahun ini|tahun|di|untuk|dari|dengan|dan|atau|yang|adalah|berapa|berapakah|apa|apakah|apa itu|tampilkan|lihat|show|buka|cari|temukan|data|tentang)\b/gi, ' ')
+        .replace(/\s+/g, ' ').trim();
+      const sorted = Object.entries(SIN_SUL).sort((a, b) => b[0].length - a[0].length);
+      for (const [k, v] of sorted) if (h.includes(k)) { h = v; break; }
+      return h.trim();
+    }
+    function cariIndSulsel(kw) {
+      const w = kw.toLowerCase().split(/\s+/).filter(x => x.trim().length > 2);
+      return sulsulInd.filter(v => w.every(z => v.nama.toLowerCase().includes(z)))
+        .sort((a, b) => a.nama.length - b.nama.length);
+    }
+
+    let jawSul = '', tipeSul = 'info', kartuSul = [], pubSul = [], trendSul = [], saranSul = [], pdfSul = [];
+    const isTrendSul = /\b(trend|tren|perkembangan|sejarah|sejak|dari tahun|antara)\b/i.test(pesan);
+    const isMaxMin   = /\b(tertinggi|terendah|terbanyak|tersedikit|terbesar|terkecil|paling)\b/i.test(pesan);
+
+    // ── A. KABUPATEN/KOTA TERTENTU ──────────────────────────
+    const kab = matchedKab && sulsulKab.length
+      ? (sulsulKab.find(x => x.kabupaten === matchedKab) || sulsulKab.find(x => x.nama === matchedKab))
+      : null;
+
+    if (kab) {
+      tipeSul = 'data';
+      const nama = kab.nama || kab.kabupaten;
+
+      // Tertinggi/terendah antar kabupaten
+      if (isMaxMin) {
+        const byPenduduk = /\b(penduduk|penduduk terbanyak|tersedikit)\b/i.test(pesan);
+        const byIpm      = /\b(ipm|indeks pembangunan)\b/i.test(pesan);
+        const key        = byIpm ? 'ipm' : 'penduduk';
+        const desc       = byIpm ? 'IPM 2025' : 'Jumlah Penduduk 2026';
+        const sorted = [...sulsulKab].sort((a, b) =>
+          (byIpm ? b.ipm['2025'] : b.penduduk) - (byIpm ? a.ipm['2025'] : a.penduduk));
+        const top3 = sorted.slice(0, 3), bot3 = sorted.slice(-3).reverse();
+        jawSul = byIpm
+          ? `Kabupaten/kota di Sulawesi Selatan dengan **IPM tertinggi 2025**:\n` +
+            top3.map((x, i) => `${i + 1}. **${x.nama}** – ${fmt(x.ipm['2025'])}`).join('\n') +
+            `\n\nTerendah:\n` + bot3.map((x, i) => `${i + 1}. **${x.nama}** – ${fmt(x.ipm['2025'])}`).join('\n')
+          : `Kabupaten/kota di Sulawesi Selatan dengan **penduduk terbanyak (2026)**:\n` +
+            top3.map((x, i) => `${i + 1}. **${x.nama}** – ${fmt(x.penduduk)} jiwa`).join('\n') +
+            `\n\nTersedikit:\n` + bot3.map((x, i) => `${i + 1}. **${x.nama}** – ${fmt(x.penduduk)} jiwa`).join('\n');
+      }
+      // Trend penduduk
+      else if (isTrendSul && /\b(penduduk|jumlah)\b/i.test(pesan)) {
+        trendSul = [
+          { tahun: '2020', nilai: fmt(kab.penduduk_2020) },
+          { tahun: '2025', nilai: fmt(kab.penduduk_2025) },
+          { tahun: '2026', nilai: fmt(kab.penduduk) },
+        ];
+        jawSul = `Perkembangan penduduk **${nama}** (Sulawesi Selatan):`;
+      }
+      else {
+        const L = lower;
+        const F = [
+          { kw: ['rasio jenis kelamin'], get: () => [fmt(kab.rasio_jk), 'rasio', 'Rasio Jenis Kelamin (2026)'] },
+          { kw: ['rasio ketergantungan'], get: () => [fmt(kab.rasio_ketergantungan), 'rasio', 'Rasio Ketergantungan (2026)'] },
+          { kw: ['kepadatan'], get: () => [fmt(kab.kepadatan), 'jiwa/km2', 'Kepadatan Penduduk (2026)'] },
+          { kw: ['laju pertumbuhan penduduk', 'laju penduduk', 'pertumbuhan penduduk'], get: () => [fmt(kab.laju_pertumbuhan), '% per tahun', 'Laju Pertumbuhan Penduduk'] },
+          { kw: ['angka kemiskinan', 'tingkat kemiskinan', 'kemiskinan', 'penduduk miskin', 'miskin'], get: () => [fmt(kab.kemiskinan['2025'].persen), '% penduduk (Maret 2025)', 'Penduduk Miskin'] },
+          { kw: ['indeks pembangunan', 'ipm'], get: () => [fmt(kab.ipm['2025']), 'indeks (2025)', 'Indeks Pembangunan Manusia'] },
+          { kw: ['umur harapan', 'harapan hidup', 'uhh'], get: () => [fmt(kab.uhh_2025), 'tahun (2025)', 'Umur Harapan Hidup'] },
+          { kw: ['harapan lama sekolah', 'hls'], get: () => [fmt(kab.hls_2025), 'tahun (2025)', 'Harapan Lama Sekolah'] },
+          { kw: ['rata-rata lama sekolah', 'rls'], get: () => [fmt(kab.rls_2025), 'tahun (2025)', 'Rata-rata Lama Sekolah'] },
+          { kw: ['pengeluaran per kapita', 'pengeluaran'], get: () => [fmt(kab.pengeluaran_2025), 'ribu rupiah/tahun (2025)', 'Pengeluaran per Kapita'] },
+          { kw: ['gini', 'ketimpangan'], get: () => [fmt(kab.gini['2025']), 'rasio (Maret 2025)', 'Gini Rasio'] },
+          { kw: ['tpak'], get: () => [fmt(kab.tpak['2025']), '% (Agustus 2025)', 'TPAK'] },
+          { kw: ['tpt', 'pengangguran', 'penganggur', 'pengangguran terbuka'], get: () => [fmt(kab.tpt['2025']), '% (Agustus 2025)', 'TPT'] },
+          { kw: ['angkatan kerja', 'bekerja'], get: () => [fmt(kab.angkatan_kerja.total), 'orang (Agustus 2025)', 'Angkatan Kerja'] },
+          { kw: ['pdrb per kapita', 'pdrb perkapita'], get: () => [fmt(kab.pdrb_perkapita['2025']), 'juta rupiah (2025)', 'PDRB per Kapita'] },
+          { kw: ['pdrb', 'produk domestik', 'harga berlaku'], get: () => [fmt(kab.pdrb.adhb_2025), 'miliar rupiah (2025)', 'PDRB ADHB'] },
+          { kw: ['pertumbuhan ekonomi', 'pertumbuhan pdrb', 'laju pertumbuhan'], get: () => [fmt(kab.pertumbuhan_ekonomi['2025']), '% (2025)', 'Pertumbuhan Ekonomi'] },
+          { kw: ['penduduk', 'jumlah penduduk', 'penduduk 2026'], get: () => [fmt(kab.penduduk), 'jiwa (2026)', 'Jumlah Penduduk'] },
+        ];
+        let matchedField = null;
+        for (const f of F) if (f.kw.some(w => L.includes(w))) { matchedField = f; break; }
+
+        const isKemiskinan = matchedField && matchedField.kw.some(w => /miskin|kemiskinan/.test(w));
+        if (matchedField && isKemiskinan) {
+          jawSul = `Pada **${nama}** (Sulawesi Selatan), penduduk miskin **Maret 2025** berjumlah **${fmt(kab.kemiskinan['2025'].jumlah)} jiwa** (${fmt(kab.kemiskinan['2025'].persen)}% dari penduduk).`;
+          kartuSul = [
+            { nama: 'Penduduk Miskin (jumlah)', nilai: fmt(kab.kemiskinan['2025'].jumlah), satuan: 'jiwa', tahun: '2025', sumber: null },
+            { nama: 'Penduduk Miskin (persentase)', nilai: fmt(kab.kemiskinan['2025'].persen), satuan: '%', tahun: '2025', sumber: null },
+          ];
+        } else if (matchedField) {
+          const [nilai, sat, label] = matchedField.get();
+          jawSul = `Pada **${nama}** (Sulawesi Selatan), **${label.toLowerCase()}** adalah **${nilai} ${sat}**.`;
+          kartuSul.push({ nama: label, nilai, satuan: sat, tahun: /2026/.test(sat) ? '2026' : '2025', sumber: null });
+        } else {
+          // Ringkasan default
+          jawSul = `Data **${nama}** (Provinsi Sulawesi Selatan):\n` +
+            `- **Penduduk 2026**: ${fmt(kab.penduduk)} jiwa\n` +
+            `- **IPM 2025**: ${fmt(kab.ipm['2025'])}\n` +
+            `- **Penduduk miskin (Maret 2025)**: ${fmt(kab.kemiskinan['2025'].jumlah)} jiwa (${fmt(kab.kemiskinan['2025'].persen)}%)\n` +
+            `- **TPT Agustus 2025**: ${fmt(kab.tpt['2025'])}%\n` +
+            `- **PDRB per kapita 2025**: ${fmt(kab.pdrb_perkapita['2025'])} juta rupiah`;
+          kartuSul = [
+            { nama: 'Jumlah Penduduk 2026', nilai: fmt(kab.penduduk), satuan: 'jiwa', tahun: '2026', sumber: null },
+            { nama: 'IPM', nilai: fmt(kab.ipm['2025']), satuan: 'indeks', tahun: '2025', sumber: null },
+            { nama: 'Penduduk Miskin', nilai: fmt(kab.kemiskinan['2025'].persen), satuan: '%', tahun: '2025', sumber: null },
+            { nama: 'TPT', nilai: fmt(kab.tpt['2025']), satuan: '%', tahun: '2025', sumber: null },
+          ];
+        }
+      }
+      pubSul = cariPubSulsel(nama, 3);
+      pdfSul = cariDalamPDFSulsel(nama);
+      saranSul = [`Perkembangan penduduk ${nama}`, `IPM ${nama}`, `Penduduk miskin ${nama}`, `Tampilkan publikasi tentang ${nama}`];
+    }
+
+    // ── B. TINGKAT PROVINSI ───────────────────────────────
+    else {
+      // Daftar 24 kabupaten/kota
+      if (/daftar|semua kabupaten|berapa kabupaten|nama kabupaten|kabupaten di/.test(lower) ||
+          (/\bkabupaten\b/.test(lower) && /\b(daftar|banyak|berapa|list|semua)\b/.test(lower))) {
+        tipeSul = 'info';
+        jawSul  = `Sulawesi Selatan terdiri dari **${sulsulKab.length} kabupaten/kota** (data penduduk 2026, proyeksi BPS):\n` +
+          sulsulKab.map(x => `- **${x.nama}**: ${fmt(x.penduduk)} jiwa`).join('\n');
+        saranSul = ['Berapa penduduk Kota Makassar?', 'IPM tertinggi', 'Penduduk Tana Toraja'];
+      }
+      else if (isMaxMin) {
+        // Ranking antar kabupaten/kota (level provinsi)
+        tipeSul = 'data';
+        const dirTinggi = /tertinggi|terbanyak|terbesar|paling/.test(pesan);
+        let F;
+        if (/\bgini\b|\bketimpangan\b/.test(pesan))              F = { k: k => k.gini['2025'],                  label: 'Gini Rasio',         sat: 'rasio (Maret 2025)' };
+        else if (/\btpak\b/.test(pesan))                          F = { k: k => k.tpak['2025'],                 label: 'TPAK',               sat: '% (Agustus 2025)' };
+        else if (/\b(tpt|penganggur|pengangguran)\b/.test(pesan)) F = { k: k => k.tpt['2025'],                   label: 'TPT',                sat: '% (Agustus 2025)' };
+        else if (/\b(miskin|kemiskinan)\b/.test(pesan))           F = { k: k => k.kemiskinan['2025'].persen,    label: 'Penduduk Miskin',    sat: '% (Maret 2025)' };
+        else if (/\bpdrb\b/.test(pesan) && /\bper ?kapita|perkapita\b/.test(pesan)) F = { k: k => k.pdrb_perkapita['2025'], label: 'PDRB per Kapita', sat: 'juta rupiah (2025)' };
+        else if (/\bpdrb\b/.test(pesan))                          F = { k: k => k.pdrb.adhb_2025,               label: 'PDRB ADHB',         sat: 'miliar rupiah (2025)' };
+        else if (/\b(ipm|indeks pembangunan)\b/.test(pesan))      F = { k: k => k.ipm['2025'],                  label: 'IPM',                sat: 'indeks (2025)' };
+        else if (/\bpenduduk\b/.test(pesan))                      F = { k: k => k.penduduk,                     label: 'Jumlah Penduduk',    sat: 'jiwa (2026)' };
+        else                                                      F = { k: k => k.ipm['2025'],                  label: 'IPM',                sat: 'indeks (2025)' };
+        const sorted = [...sulsulKab].sort((a, b) => (dirTinggi ? F.k(b) - F.k(a) : F.k(a) - F.k(b)));
+        const picks  = sorted.slice(0, 3);
+        jawSul = `Kabupaten/kota di Sulawesi Selatan dengan **${F.label.toLowerCase()} ${dirTinggi ? 'tertinggi' : 'terendah'}**:\n` +
+          picks.map((x, i) => `${i + 1}. **${x.nama}** – ${fmt(F.k(x))} ${F.sat}`).join('\n');
+        kartuSul = picks.map(x => ({ nama: x.nama, nilai: fmt(F.k(x)), satuan: F.sat, tahun: '', sumber: null }));
+        saranSul = ['Berapa penduduk Kota Makassar?', 'Berapa IPM Gowa?', 'Berapa angka kemiskinan Sulsel?'];
+      }
+      else {
+        const rawKw = lower.replace(/^(berapa|berapakah|berapa jumlah|berapa nilai|berapa angka|apa|apakah|apa itu|apa yang dimaksud|tampilkan|lihat|show|buka|cari|temukan|perlihatkan|download|unduh|data)\s*/, '')
+          .replace(/\s+/g, ' ').trim();
+        const isTampilSul = /\b(tampilkan|lihat|show|buka|cari|temukan|download|unduh|publikasi)\b/i.test(pesan);
+        let keyword = normSul(rawKw);
+
+        let hits = cariIndSulsel(keyword);
+        if (!hits.length && keyword.split(' ').length > 2)
+          hits = cariIndSulsel(keyword.split(' ').slice(0, 2).join(' '));
+        if (!hits.length && /\bpdrb\b/.test(keyword) && !/\bkapita\b/.test(keyword))
+          hits = cariIndSulsel('PDRB Atas Dasar Harga Berlaku');
+        if (!hits.length) {
+          const w = keyword.split(' ').find(x =>
+            /^(penduduk|pddk|miskin|kemiskinan|ipm|indeks|pdrb|kapita|perkapita|tpak|tpt|penganggur|angkatan|gini|garis|harapan|sekolah|ketergantungan|kepadatan|uhh|hls|rls|inflasi|pertumbuhan)$/.test(x));
+          if (w) hits = cariIndSulsel(w);
+        }
+
+        if (!isTampilSul && hits.length > 0) {
+          tipeSul = 'data';
+          const utama = hits[0];
+          jawSul = `Berdasarkan data BPS Provinsi Sulawesi Selatan, **${utama.nama}** (${utama.tahun}) adalah:\n\n**${fmt(utama.nilai)} ${utama.satuan}**`;
+          kartuSul = hits.slice(0, 4).map(v => ({
+            nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun,
+            sumber: cariSumberIndikator(v.nama, sulsulPub)
+          }));
+          if (isTrendSul) {
+            let sulsulIndikRaw = [];
+            try { if (fs.existsSync(SULSEL_INDIK_FILE)) sulsulIndikRaw = baca(SULSEL_INDIK_FILE)['Tahunan'] || []; } catch {}
+            let headerRow = null;
+            for (const row of sulsulIndikRaw) {
+              if (!row) continue;
+              if (row.filter(c => /^20\d{2}$/.test(String(c || '').trim())).length >= 3) { headerRow = row; continue; }
+              if (!row[0] || !headerRow) continue;
+              if (String(row[0]).trim().toLowerCase() === utama.nama.toLowerCase()) {
+                trendSul = headerRow
+                  .map((h, i) => ({ tahun: String(h || '').trim(), nilai: row[i] }))
+                  .filter(x => /^20\d{2}$/.test(x.tahun) && x.nilai !== null && x.nilai !== '')
+                  .map(x => ({ tahun: x.tahun, nilai: fmt(x.nilai) }));
+                break;
+              }
+            }
+            if (trendSul.length) jawSul += `\n\nBerikut tren **${utama.nama}** dari ${trendSul[0].tahun} hingga ${trendSul[trendSul.length - 1].tahun}:`;
+          }
+          pubSul = cariPubSulsel(keyword.split(' ').slice(0, 2).join(' '), 3);
+          pdfSul = cariDalamPDFSulsel(rawKw);
+          saranSul = [`Tren ${utama.nama}`, `Publikasi tentang ${keyword}`, `Berapa IPM Kota Makassar?`];
+        } else {
+          pdfSul  = cariDalamPDFSulsel(rawKw);
+          pubSul  = cariPubSulsel(rawKw, 5);
+          if (pubSul.length || pdfSul.length) {
+            tipeSul = pdfSul.length ? 'pdf' : 'publikasi';
+            jawSul  = pdfSul.length
+              ? `Saya menemukan informasi tentang **"${rawKw}"** di dalam publikasi BPS Provinsi Sulawesi Selatan:`
+              : `Ditemukan publikasi BPS Provinsi Sulawesi Selatan untuk "**${rawKw}**":`;
+          } else {
+            tipeSul = 'notfound';
+            jawSul  = `Maaf, saya belum punya data untuk "**${pesan}**". Coba tanya:\n- Berapa jumlah penduduk Sulsel?\n- Berapa IPM Sulawesi Selatan 2025?\n- Berapa penduduk Kota Makassar?\n- Daerah dengan IPM tertinggi\n- Tampilkan publikasi pertanian Sulsel`;
+            saranSul = ['Berapa jumlah penduduk Sulsel?', 'Berapa IPM Sulawesi Selatan?', 'Berapa angka kemiskinan Sulsel?', 'Penduduk Kota Makassar'];
+          }
+        }
+      }
+    }
+
+    return res.json({ ok: true, tipe: tipeSul, jawaban: jawSul, dataKartu: kartuSul,
+      publikasi: pubSul, kecamatan: [], trendData: trendSul, saranKueri: saranSul,
+      pdfHasil: pdfSul, tabelMakro: [] });
+  }
+
   let jawaban    = '';
   let tipe       = 'info';
   let dataKartu  = [];
@@ -362,7 +761,7 @@ app.post('/api/chat', (req, res) => {
       jawaban  = `Berdasarkan data BPS Kabupaten Jeneponto, **${utama.nama}** pada tahun **${utama.tahun}** adalah:\n\n**${fmt(utama.nilai)} ${utama.satuan}**`;
       dataKartu = hits.slice(0, 4).map(v => ({
         nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun,
-        sumber: cariPub(v.nama.split(' ').slice(0, 2).join(' '), 1)[0] || null
+        sumber: cariSumberIndikator(v.nama, allPub)
       }));
 
       if (isTrend) {
@@ -438,7 +837,7 @@ app.post('/api/chat', (req, res) => {
     const indHits = cariIndikator(topik);
     if (indHits.length) {
       dataKartu = indHits.slice(0, 3).map(v => ({
-        nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: null
+        nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: cariSumberIndikator(v.nama, allPub)
       }));
       jawaban = `Data **${topik}** di Kabupaten Jeneponto:`;
     } else if (pdfHasil.length) {
@@ -462,7 +861,7 @@ app.post('/api/chat', (req, res) => {
     const indHits = cariIndikator('aset');
     if (indHits.length) {
       dataKartu = indHits.slice(0, 3).map(v => ({
-        nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: null
+        nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: cariSumberIndikator(v.nama, allPub)
       }));
       jawaban = `Data **aset dan keuangan daerah** Kabupaten Jeneponto:`;
     } else if (pdfHasil.length || publikasi.length) {
@@ -513,7 +912,7 @@ app.post('/api/chat', (req, res) => {
 
     if (indHits.length || pubHits.length || pdfHits.length || kecHits.length) {
       tipe      = indHits.length ? 'gabungan' : (pdfHits.length ? 'pdf' : 'publikasi');
-      dataKartu = indHits.map(v => ({ nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: cariPub(v.nama.split(' ').slice(0, 2).join(' '), 1)[0] || null }));
+      dataKartu = indHits.map(v => ({ nama: v.nama, nilai: fmt(v.nilai), satuan: v.satuan, tahun: v.tahun, sumber: cariSumberIndikator(v.nama, allPub) }));
       publikasi = pubHits;
       pdfHasil  = pdfHits;
       tabelMakro = cocokMakro(lower);
@@ -540,9 +939,21 @@ app.post('/api/chat', (req, res) => {
 let _indikatorCache = null;
 function getIndikatorMakro() {
   if (_indikatorCache) return _indikatorCache;
-  if (!fs.existsSync(INDIK_FILE)) return [];
+  _indikatorCache = parseIndikatorFile(INDIK_FILE);
+  return _indikatorCache;
+}
 
-  const data   = baca(INDIK_FILE);
+let _indikatorSulselCache = null;
+function getIndikatorSulsel() {
+  if (_indikatorSulselCache) return _indikatorSulselCache;
+  _indikatorSulselCache = parseIndikatorFile(SULSEL_INDIK_FILE);
+  return _indikatorSulselCache;
+}
+
+function parseIndikatorFile(file) {
+  if (!fs.existsSync(file)) return [];
+
+  const data   = baca(file);
   const result = [];
   const namaSet = new Set(); // hindari duplikat
 
@@ -584,11 +995,9 @@ function getIndikatorMakro() {
     }
   }
 
-  // Parse: Tahunan (utama) → Summary (pelengkap)
   parseSheet(data['Tahunan']);
   parseSheet(data['Summary']);
 
-  _indikatorCache = result;
   return result;
 }
 
@@ -599,63 +1008,30 @@ app.get('/api/search', (req, res) => {
   if (!q || q.length < 2) return res.json({ ok:true, query:q, indikatorMakro:[], publikasi:[], tabelDinamis:[] });
 
   const words = q.split(/\s+/).filter(w => w.length > 1);
+  const wil = (req.query.wilayah || '').toLowerCase() === 'sulsel' ? 'sulsel' : 'jeneponto';
 
   function cocok(teks) {
     const t = (teks || '').toLowerCase();
     return words.every(w => t.includes(w));
   }
 
-  const allPub = baca(DATA_FILE);
-
-  // ── Peta sumber publikasi untuk tiap kategori indikator ──────
-  const SUMBER_MAP = {
-    'miskin'       : ['kemiskinan','statistik daerah','kesejahteraan'],
-    'kemiskinan'   : ['kemiskinan','statistik daerah'],
-    'penduduk'     : ['dalam angka','statistik daerah'],
-    'pdrb'         : ['pdrb','produk domestik','lapangan usaha'],
-    'ipm'          : ['pembangunan manusia','statistik daerah','dalam angka'],
-    'tpak'         : ['ketenagakerjaan','dalam angka'],
-    'pengangguran' : ['ketenagakerjaan','dalam angka'],
-    'angkatan kerja':['ketenagakerjaan','dalam angka'],
-    'gini'         : ['statistik daerah','kesejahteraan'],
-    'inflasi'      : ['inflasi','harga','statistik daerah'],
-    'pertanian'    : ['pertanian','hortikultura','statistik daerah'],
-    'ipg'          : ['gender','dalam angka','statistik daerah'],
-    'harapan hidup': ['pembangunan manusia','statistik daerah'],
-    'sekolah'      : ['pembangunan manusia','statistik daerah'],
-    'default'      : ['dalam angka','statistik daerah'],
-  };
-
-  function cariSumber(namaIndikator) {
-    const n = namaIndikator.toLowerCase();
-    let kwList = SUMBER_MAP['default'];
-    for (const [key, kws] of Object.entries(SUMBER_MAP)) {
-      if (key !== 'default' && n.includes(key)) { kwList = kws; break; }
-    }
-    for (const kw of kwList) {
-      const match = allPub.find(p =>
-        (p.judul||'').toLowerCase().includes(kw) ||
-        (p.deskripsi||'').toLowerCase().includes(kw)
-      );
-      if (match) return { judul: match.judul, tahun: match.tahun, url: match.url };
-    }
-    return null;
-  }
+  const allPub = wil === 'sulsel' ? baca(SULSEL_PUB_FILE) : baca(DATA_FILE);
 
   // ── 1. Indikator Makro + sumber ───────────────────────
-  const indikatorMakro = getIndikatorMakro()
+  const indSumber = wil === 'sulsel' ? getIndikatorSulsel() : getIndikatorMakro();
+  const indikatorMakro = indSumber
     .filter(v => cocok(v.nama))
     .slice(0, 8)
     .map(v => ({
       ...v,
-      sumber      : cariSumber(v.nama),
-      sumberExcel : 'Indikator Makro BPS Kab. Jeneponto',
-      sumberUrl   : 'https://s.bps.go.id/7304_indikatormakro',
+      sumber      : cariSumberIndikator(v.nama, allPub),
+      sumberExcel : wil === 'sulsel' ? 'Indikator Makro BPS Prov. Sulawesi Selatan' : 'Indikator Makro BPS Kab. Jeneponto',
+      sumberUrl   : wil === 'sulsel' ? 'https://sulsel.bps.go.id' : 'https://s.bps.go.id/7304_indikatormakro',
     }));
 
   // ── 2. Tabel Dinamis ─────────────────────────────────
   let tabelDinamis = [];
-  if (fs.existsSync(TABEL_FILE)) {
+  if (wil !== 'sulsel' && fs.existsSync(TABEL_FILE)) {
     const td = baca(TABEL_FILE);
     tabelDinamis = (td.indikator || [])
       .filter(v => cocok(v.judul) || cocok(v.subjek) || cocok(v.kategori))
@@ -665,7 +1041,7 @@ app.get('/api/search', (req, res) => {
   // ── 2b. Tabel Statistik Makro (seri tahun penuh) ─────
   let tabelMakro = [];
   try {
-    if (fs.existsSync(MAKRO_FILE)) {
+    if (wil !== 'sulsel' && fs.existsSync(MAKRO_FILE)) {
       const makro = baca(MAKRO_FILE).tabel || [];
       tabelMakro = makro.filter(t =>
         cocok(t.nama) || t.rows.some(r => cocok(r.label))
@@ -678,37 +1054,37 @@ app.get('/api/search', (req, res) => {
     .filter(p => cocok(p.judul) || cocok(p.deskripsi))
     .slice(0, 5);
 
-  // ── 4. Data Kecamatan ─────────────────────────────────
+  // ── 4. Data Kecamatan (hanya Jeneponto) ──────────────
   let kecamatan = [];
-  const kecWords = ['kecamatan','penduduk','bangkala','tamalatea','bontoramba',
-    'binamu','turatea','batang','arungkeke','tarowang','kelara','rumbia'];
-  const isKecQuery = words.some(w => kecWords.includes(w)) ||
-                     q.includes('perkecamatan') || q.includes('per kecamatan') ||
-                     q.includes('tiap kecamatan') || q.includes('semua kecamatan');
+  const pubKec = [];
+  if (wil === 'jeneponto') {
+    const kecWords = ['kecamatan','penduduk','bangkala','tamalatea','bontoramba',
+      'binamu','turatea','batang','arungkeke','tarowang','kelara','rumbia'];
+    const isKecQuery = words.some(w => kecWords.includes(w)) ||
+                       q.includes('perkecamatan') || q.includes('per kecamatan') ||
+                       q.includes('tiap kecamatan') || q.includes('semua kecamatan');
 
-  if (fs.existsSync(KECAM_FILE)) {
-    const allKec = baca(KECAM_FILE);
-    if (isKecQuery) {
-      // Cari kecamatan tertentu atau tampilkan semua
-      const namaKec = words.find(w => allKec.some(k => k.kecamatan.toLowerCase().includes(w)));
-      if (namaKec) {
-        kecamatan = allKec.filter(k => k.kecamatan.toLowerCase().includes(namaKec));
-      } else {
-        kecamatan = allKec.filter(k => k.kecamatan !== 'TOTAL');
+    if (fs.existsSync(KECAM_FILE)) {
+      const allKec = baca(KECAM_FILE);
+      if (isKecQuery) {
+        const namaKec = words.find(w => allKec.some(k => k.kecamatan.toLowerCase().includes(w)));
+        if (namaKec) {
+          kecamatan = allKec.filter(k => k.kecamatan.toLowerCase().includes(namaKec));
+        } else {
+          kecamatan = allKec.filter(k => k.kecamatan !== 'TOTAL');
+        }
       }
+      allKec.filter(k => k.kecamatan !== 'TOTAL').forEach(k => {
+        if (cocok(k.kecamatan) && !kecamatan.find(x => x.kecamatan === k.kecamatan)) {
+          kecamatan.push(k);
+        }
+      });
     }
-    // Cari kecamatan spesifik dari kata kunci
-    allKec.filter(k => k.kecamatan !== 'TOTAL').forEach(k => {
-      if (cocok(k.kecamatan) && !kecamatan.find(x => x.kecamatan === k.kecamatan)) {
-        kecamatan.push(k);
-      }
-    });
-  }
 
-  // Sumber publikasi kecamatan
-  const pubKec = (baca(DATA_FILE))
-    .filter(p => p.judul?.toLowerCase().includes('dalam angka') && p.judul?.toLowerCase().includes('kecamatan'))
-    .slice(0, 3);
+    pubKec.push(...(baca(DATA_FILE))
+      .filter(p => p.judul?.toLowerCase().includes('dalam angka') && p.judul?.toLowerCase().includes('kecamatan'))
+      .slice(0, 3));
+  }
 
   res.json({ ok:true, query:q, indikatorMakro, tabelMakro, tabelDinamis, publikasi, kecamatan, pubKec });
 });
@@ -904,6 +1280,41 @@ app.get('/api/stats', (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════
+// PUBLIC API – PUBLIKASI SULAWESI SELATAN (bagian terpisah)
+// ══════════════════════════════════════════════════════
+
+function idSulsel(p) {
+  return 'sulsel-' + crypto.createHash('sha1')
+    .update(String(p.url||'') + '|' + String(p.judul||''))
+    .digest('hex').slice(0, 10);
+}
+
+app.get('/api/publikasi-sulsel', (req, res) => {
+  let data = baca(SULSEL_PUB_FILE).map(p => ({ ...p, wilayah: 'sulsel' }));
+  const q  = (req.query.q || '').toLowerCase().trim();
+  const th = req.query.tahun || '';
+  const kt = req.query.kategori || '';
+  const pg = parseInt(req.query.page  || '1', 10);
+  const lm = parseInt(req.query.limit || '12', 10);
+
+  if (q)  data = data.filter(p => p.judul?.toLowerCase().includes(q) || p.deskripsi?.toLowerCase().includes(q));
+  if (th) data = data.filter(p => String(p.tahun) === th);
+  if (kt) data = data.filter(p => p.kategori === kt);
+
+  const total = data.length;
+  res.json({ ok: true, total, halaman: pg, limit: lm, data: data.slice((pg-1)*lm, pg*lm) });
+});
+
+app.get('/api/stats-sulsel', (req, res) => {
+  const data = baca(SULSEL_PUB_FILE);
+  const kat = {}; const thn = new Set();
+  data.forEach(p => { kat[p.kategori] = (kat[p.kategori]||0)+1; if(p.tahun) thn.add(p.tahun); });
+  res.json({ ok: true, total: data.length, totalKategori: Object.keys(kat).length,
+    totalTahun: thn.size, tahunMin: Math.min(...thn), tahunMax: Math.max(...thn),
+    kategori: kat, terbaru: data.slice(0, 6) });
+});
+
+// ══════════════════════════════════════════════════════
 // API – SUMBER DATA (interkoneksi BPS)
 // ══════════════════════════════════════════════════════
 
@@ -997,11 +1408,40 @@ app.put('/api/indikator/:sheet/cell', requireAuth, (req, res) => {
 // ADMIN API – PUBLIKASI CRUD
 // ══════════════════════════════════════════════════════
 
+// Index isi PDF hasil upload admin → langsung bisa dicari di chat bot.
+function indexUploadLokal(fileLokal, meta) {
+  if (!fileLokal || !fileLokal.toLowerCase().endsWith('.pdf')) return;
+  const fname = path.basename(fileLokal);
+  const abspath = path.join(UPLOAD_DIR, 'files', fname);
+  if (!fs.existsSync(abspath)) return;
+  const m = {
+    file: fname, fileLokal,
+    judul: meta.judul || fname,
+    tahun: meta.tahun || null,
+    kategori: meta.kategori || 'Lainnya',
+    url_bps: meta.url || '',
+    cover: meta.cover || '',
+  };
+  setImmediate(() => {
+    pdfIndexer.upsertUpload(UPLOAD_PDF_INDEX_FILE, m, abspath)
+      .then(r => { if (r.ok) resetPdfCaches(); })
+      .catch(e => console.error('[upload-index]', e.message));
+  });
+}
+
+function hapusIndexUpload(fileLokal) {
+  if (!fileLokal || !fileLokal.toLowerCase().endsWith('.pdf')) return;
+  const fname = path.basename(fileLokal);
+  pdfIndexer.removeUpload(UPLOAD_PDF_INDEX_FILE, fname)
+    .then(r => { if (r.removed) resetPdfCaches(); })
+    .catch(e => console.error('[upload-index]', e.message));
+}
+
 app.get('/api/admin/publikasi', requireAdmin, (req, res) => {
   const data = baca(DATA_FILE);
   const q    = (req.query.q || '').toLowerCase();
   const items = q ? data.filter(p => p.judul?.toLowerCase().includes(q)) : data;
-  res.json({ ok: true, total: items.length, data: items });
+  res.json({ ok: true, total: items.length, data: items.map(p => ({ ...p, wilayah: 'jeneponto' })) });
 });
 
 app.post('/api/admin/publikasi', requireAdmin,
@@ -1019,6 +1459,7 @@ app.post('/api/admin/publikasi', requireAdmin,
       lokal: true, dibuatPada: new Date().toISOString(),
     };
     data.unshift(pub); tulis(DATA_FILE, data);
+    indexUploadLokal(pub.fileLokal, pub);
     res.json({ ok: true, data: pub });
   }
 );
@@ -1030,6 +1471,7 @@ app.put('/api/admin/publikasi/:id', requireAdmin,
     const idx = data.findIndex(p => String(p.id) === String(req.params.id));
     if (idx < 0) return res.status(404).json({ ok: false, error: 'Tidak ditemukan' });
     const pub = { ...data[idx] };
+    const fileLokalLama = pub.fileLokal;
     if (body.judul)     pub.judul     = body.judul;
     if (body.tanggal)   pub.tanggal   = body.tanggal;
     if (body.deskripsi) pub.deskripsi = body.deskripsi;
@@ -1041,16 +1483,67 @@ app.put('/api/admin/publikasi/:id', requireAdmin,
     if (tm) pub.tahun = parseInt(tm[1]);
     pub.diupdatePada = new Date().toISOString();
     data[idx] = pub; tulis(DATA_FILE, data);
+    if (pub.fileLokal !== fileLokalLama) hapusIndexUpload(fileLokalLama);
+    indexUploadLokal(pub.fileLokal, pub);
     res.json({ ok: true, data: pub });
   }
 );
 
 app.delete('/api/admin/publikasi/:id', requireAdmin, (req, res) => {
   let data = baca(DATA_FILE);
+  const del = data.find(p => String(p.id) === String(req.params.id));
   const n  = data.length;
   data = data.filter(p => String(p.id) !== String(req.params.id));
   if (data.length === n) return res.status(404).json({ ok: false, error: 'Tidak ditemukan' });
-  tulis(DATA_FILE, data); res.json({ ok: true });
+  tulis(DATA_FILE, data);
+  if (del) hapusIndexUpload(del.fileLokal);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════
+// ADMIN API – PUBLIKASI SULAWESI SELATAN
+// ══════════════════════════════════════════════════════
+
+app.get('/api/admin/publikasi-sulsel', requireAdmin, (req, res) => {
+  const data = baca(SULSEL_PUB_FILE);
+  const q    = (req.query.q || '').toLowerCase();
+  const items = q ? data.filter(p => (p.judul||'').toLowerCase().includes(q)) : data;
+  res.json({ ok: true, total: items.length, data: items.map(p => ({ ...p, id: idSulsel(p), wilayah: 'sulsel', lokal: !!p.fileLokal })) });
+});
+
+app.put('/api/admin/publikasi-sulsel/:id', requireAdmin,
+  upload.fields([{ name:'cover',maxCount:1 },{ name:'file',maxCount:1 }]),
+  (req, res) => {
+    const data = baca(SULSEL_PUB_FILE); const files = req.files||{}; const body = req.body;
+    const idx = data.findIndex(p => idSulsel(p) === req.params.id);
+    if (idx < 0) return res.status(404).json({ ok:false, error:'Tidak ditemukan' });
+    const pub = { ...data[idx] };
+    const fileLokalLama = pub.fileLokal;
+    if (body.judul)     pub.judul     = body.judul;
+    if (body.tanggal)   pub.tanggal   = body.tanggal;
+    if (body.deskripsi) pub.deskripsi = body.deskripsi;
+    if (body.kategori)  pub.kategori  = body.kategori;
+    if (body.url)       pub.url       = body.url;
+    if (files.cover)    pub.cover     = `/uploads/covers/${files.cover[0].filename}`;
+    if (files.file)     pub.fileLokal = `/uploads/files/${files.file[0].filename}`;
+    const tm = (pub.tanggal||'').match(/\b(20\d{2}|19\d{2})\b/);
+    if (tm) pub.tahun = parseInt(tm[1]);
+    pub.diupdatePada = new Date().toISOString();
+    data[idx] = pub; tulis(SULSEL_PUB_FILE, data);
+    if (pub.fileLokal !== fileLokalLama) hapusIndexUpload(fileLokalLama);
+    indexUploadLokal(pub.fileLokal, pub);
+    res.json({ ok: true, data: { ...pub, id: idSulsel(pub), wilayah: 'sulsel' } });
+  }
+);
+
+app.delete('/api/admin/publikasi-sulsel/:id', requireAdmin, (req, res) => {
+  let data = baca(SULSEL_PUB_FILE);
+  const idx = data.findIndex(p => idSulsel(p) === req.params.id);
+  if (idx < 0) return res.status(404).json({ ok: false, error: 'Tidak ditemukan' });
+  const del = data[idx];
+  data.splice(idx, 1); tulis(SULSEL_PUB_FILE, data);
+  hapusIndexUpload(del.fileLokal);
+  res.json({ ok: true });
 });
 
 // ══════════════════════════════════════════════════════
@@ -1226,6 +1719,16 @@ app.get('/api/admin/import', requireAdmin, async (req, res) => {
 
     const gabung=[...hasil,...dataLama];
     tulis(DATA_FILE,gabung);
+    kirim({tipe:'indikator',pesan:'✓ Menyinkronkan indeks PDF lokal (upload admin)...'});
+    let terindex = 0;
+    try {
+      terindex = await pdfIndexer.syncUploads(UPLOAD_PDF_INDEX_FILE, path.join(UPLOAD_DIR,'files'), gabung);
+      resetPdfCaches();
+      kirim({tipe:'indikator',pesan:`✓ Indeks PDF lokal tersinkron (${terindex} file)`});
+    } catch(e) {
+      console.error('[import-sync]', e.message);
+      kirim({tipe:'indikator',pesan:`⚠ Sinkron indeks PDF gagal: ${e.message}`});
+    }
     kirim({tipe:'selesai',total:hasil.length,totalDenganLokal:gabung.length});
   } catch(e) {
     kirim({tipe:'error',pesan:e.message});

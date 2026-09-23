@@ -371,12 +371,20 @@ function tambahResponBot(data) {
   if (data.dataKartu && data.dataKartu.length) {
     html += `<div class="data-cards">`;
     data.dataKartu.forEach(d => {
-      const sumberLink = d.sumber?.url
-        ? `<div class="dc-sumber"><a href="${esc(d.sumber.url)}" target="_blank" rel="noopener">
+      const src = d.sumber || null;
+      const lokal = src && src.fileLokal
+        ? `<a href="${esc(src.fileLokal)}" target="_blank" rel="noopener" style="color:#4ade80!important">
+             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+             Buka PDF (Lokal) — ${esc((src.judul||'').substring(0,32))}…</a>`
+        : '';
+      const luar = src && src.url && src.url !== src.fileLokal
+        ? `<a href="${esc(src.url)}" target="_blank" rel="noopener">
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-             ${esc((d.sumber.judul||'').substring(0,38))}…
-           </a></div>`
-        : `<div class="dc-sumber"><a href="https://s.bps.go.id/7304_indikatormakro" target="_blank">Indikator Makro BPS</a></div>`;
+             ${esc((src.judul||'').substring(0,38))}…</a>`
+        : '';
+      const sumberLink = (lokal || luar)
+        ? `<div class="dc-sumber" style="display:flex;flex-wrap:wrap;gap:6px 12px">${lokal}${luar}</div>`
+        : '';
       html += `
         <div class="data-card">
           <div class="dc-label">${esc(d.nama)}</div>
