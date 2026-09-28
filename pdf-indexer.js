@@ -15,16 +15,27 @@ const mutex = fn => {
   return r;
 };
 
-function pecahChunk(teks, ukuran = 400, overlap = 80) {
-  const words = (teks || '').split(/\s+/).filter(Boolean);
-  const out = [];
-  let i = 0;
-  while (i < words.length) {
-    const chunk = words.slice(i, i + ukuran).join(' ');
-    if (chunk.length > 50) out.push(chunk);
-    i += ukuran - overlap;
+// Versi format indeks; server mengindeks ulang entri dengan versi lebih rendah.
+const INDEKS_VERSI = 2;
+
+// Pecah teks jadi chunk yang SEJAJAR HALAMAN (satu chunk tidak pernah melintasi
+// dua halaman; halaman panjang dipecah tiap `ukuran` kata). Kembalikan juga:
+//  - halMulai  : [[nomorHalaman, indeksKataAwal], ...] untuk tiap halaman
+//  - chunkMulai: indeks kata awal tiap chunk
+// sehingga skor pencarian = skor per halaman dan nomor halaman kutipan pasti tepat.
+function pecahChunk(pages, ukuran = 350) {
+  const words = [], halMulai = [], chunks = [], chunkMulai = [];
+  for (const p of pages) {
+    const w = String(p.text || '').split(/\s+/).filter(Boolean);
+    if (!w.length) continue;
+    halMulai.push([p.num, words.length]);
+    for (let i = 0; i < w.length; i += ukuran) {
+      const chunk = w.slice(i, i + ukuran).join(' ');
+      if (chunk.length > 30) { chunks.push(chunk); chunkMulai.push(words.length + i); }
+    }
+    words.push(...w);
   }
-  return out;
+  return { chunks, chunkMulai, halMulai };
 }
 
 async function ekstrakPdf(filePath) {
@@ -33,12 +44,17 @@ async function ekstrakPdf(filePath) {
   try {
     const r = await parser.getText();
     const teks = String((r && r.text) || '').replace(/\s+/g, ' ').trim();
-    let halaman = 0;
-    try {
-      const info = await parser.getInfo(); // bisa dipanggil tanpa parsePageInfo
-      halaman = Number(info && info.total) || 0;
-    } catch {}
-    return { teks, halaman };
+    const pages = Array.isArray(r && r.pages) && r.pages.length
+      ? r.pages.map(p => ({ num: Number(p.num) || 1, text: p.text }))
+      : [{ num: 1, text: teks }];
+    let halaman = Number(r && r.total) || pages.length;
+    if (!halaman) {
+      try {
+        const info = await parser.getInfo(); // bisa dipanggil tanpa parsePageInfo
+        halaman = Number(info && info.total) || 0;
+      } catch {}
+    }
+    return { teks, pages, halaman };
   } finally {
     try { await parser.destroy(); } catch {}
   }
@@ -56,7 +72,8 @@ function upsertUpload(indexFile, meta, pdfPath) {
     const file = path.basename(meta.file || pdfPath);
     if (!fs.existsSync(pdfPath)) return { ok: false, error: 'File tidak ada' };
 
-    const { teks, halaman } = await ekstrakPdf(pdfPath);
+    const { teks, pages, halaman } = await ekstrakPdf(pdfPath);
+    const { chunks, chunkMulai, halMulai } = pecahChunk(pages);
     const entry = {
       file,
       fileLokal: meta.fileLokal || `/uploads/files/${file}`,
@@ -66,7 +83,10 @@ function upsertUpload(indexFile, meta, pdfPath) {
       url_bps: meta.url_bps || '',
       cover: meta.cover || '',
       hal_total: halaman,
-      chunks: pecahChunk(teks),
+      chunks,
+      chunk_mulai: chunkMulai,
+      hal_mulai: halMulai,
+      indeks_versi: INDEKS_VERSI,
       teks_full: teks.slice(0, 8000),
       diindexPada: new Date().toISOString(),
     };
@@ -140,4 +160,4 @@ async function syncUploads(indexFile, uploadDir, pubs) {
   return terindex;
 }
 
-module.exports = { upsertUpload, removeUpload, syncUploads, pecahChunk };
+module.exports = { upsertUpload, removeUpload, syncUploads, pecahChunk, INDEKS_VERSI };

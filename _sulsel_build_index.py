@@ -20,16 +20,24 @@ def bersihkan(teks):
     return re.sub(r'\s+', ' ', t).strip()
 
 
-def pecah_chunk(teks, ukuran=400, overlap=80):
-    words = teks.split()
-    chunks = []
-    i = 0
-    while i < len(words):
-        chunk = ' '.join(words[i:i + ukuran])
-        if len(chunk) > 50:
-            chunks.append(chunk)
-        i += ukuran - overlap
-    return chunks
+INDEKS_VERSI = 2  # format indeks; harus sama dengan pdf-indexer.js
+
+
+def pecah_chunk(halaman, ukuran=350):
+    """Chunk sejajar halaman (lihat build_pdf_index.py)."""
+    words, hal_mulai, chunks, chunk_mulai = [], [], [], []
+    for h in halaman:
+        w = h['teks'].split()
+        if not w:
+            continue
+        hal_mulai.append([h['hal'], len(words)])
+        for i in range(0, len(w), ukuran):
+            chunk = ' '.join(w[i:i + ukuran])
+            if len(chunk) > 30:
+                chunks.append(chunk)
+                chunk_mulai.append(len(words) + i)
+        words.extend(w)
+    return chunks, chunk_mulai, hal_mulai
 
 
 def ekstrak_pdf(path):
@@ -65,7 +73,7 @@ def main():
             print('(kosong/error)')
             continue
         semua_teks = ' '.join(h['teks'] for h in halaman)
-        chunks = pecah_chunk(semua_teks)
+        chunks, chunk_mulai, hal_mulai = pecah_chunk(halaman)
         entry = {
             'file': pdf_path.name,
             'fileLokal': f'/uploads/sulsel-files/{pdf_path.name}',
@@ -75,7 +83,10 @@ def main():
             'url_bps': meta.get('url', ''),
             'cover': meta.get('cover', ''),
             'hal_total': len(halaman),
-            'chunks': chunks[:120],
+            'chunks': chunks,
+            'chunk_mulai': chunk_mulai,
+            'hal_mulai': hal_mulai,
+            'indeks_versi': INDEKS_VERSI,
             'teks_full': semua_teks[:8000],
         }
         index.append(entry)

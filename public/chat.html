@@ -177,6 +177,7 @@ textarea#chatInput::placeholder{color:var(--gray400)}
 .pdf-results{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .pdf-card{background:var(--white);border:1px solid var(--gray200);border-radius:10px;overflow:hidden;transition:.2s}
 .pdf-card:hover{border-color:var(--blue);box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.pdf-card.klik{cursor:pointer}
 .pdf-header{display:flex;gap:10px;padding:10px 12px;align-items:flex-start}
 .pdf-cover{width:40px;height:50px;object-fit:cover;border-radius:5px;flex-shrink:0}
 .pdf-cover-ph{width:40px;height:50px;background:linear-gradient(135deg,#1a5fb4,#2980d4);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
@@ -372,12 +373,13 @@ function tambahResponBot(data) {
     html += `<div class="data-cards">`;
     data.dataKartu.forEach(d => {
       const src = d.sumber || null;
-      const lokal = src && src.fileLokal
-        ? `<a href="${esc(src.fileLokal)}" target="_blank" rel="noopener" style="color:#4ade80!important">
+      const pdfSrc = src ? linkPdf(src) : '';
+      const lokal = pdfSrc
+        ? `<a href="${esc(pdfSrc)}" target="_blank" rel="noopener" style="color:#4ade80!important" title="Buka file PDF">
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-             Buka PDF (Lokal) — ${esc((src.judul||'').substring(0,32))}…</a>`
+             Buka PDF — ${esc((src.judul||'').substring(0,32))}…</a>`
         : '';
-      const luar = src && src.url && src.url !== src.fileLokal
+      const luar = src && src.url && !pdfSrc
         ? `<a href="${esc(src.url)}" target="_blank" rel="noopener">
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
              ${esc((src.judul||'').substring(0,38))}…</a>`
@@ -478,15 +480,22 @@ function tambahResponBot(data) {
         ? `<img class="pub-cover" src="${esc(cUrl)}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
         : '';
       const ph = `<div class="pub-cover-ph" ${cUrl ? 'style="display:none"' : ''}>&#128196;</div>`;
-      const href = p.fileLokal ? p.fileLokal : (p.url || '#');
-      const target = p.fileLokal ? '_blank' : '_blank';
+      const pdfSrc = linkPdf(p);
+      const href = pdfSrc || p.url || '#';
+      const hal = parseInt(p.halaman, 10) || 0;
+      const status = !pdfSrc
+        ? '<span style="font-size:.7rem;color:#94a3b8">Buka di situs BPS</span>'
+        : hal
+          ? `<span style="font-size:.7rem;color:#10b981;font-weight:700">&#10003; Klik untuk membuka PDF di <u>halaman ${hal}</u>${p.hal_total ? ` dari ${esc(String(p.hal_total))}` : ''}</span>`
+          : '<span style="font-size:.7rem;color:#10b981;font-weight:700">&#10003; Klik untuk membuka PDF</span>';
       html += `
-        <a class="pub-card" href="${esc(href)}" target="${target}" rel="noopener">
+        <a class="pub-card" href="${esc(href)}" target="_blank" rel="noopener" title="${pdfSrc ? 'Buka file PDF' : 'Buka halaman publikasi di BPS'}">
           ${cover}${ph}
           <div class="pub-info">
             <div class="pub-title">${esc(p.judul)}</div>
             <div class="pub-meta">${esc(p.tanggal || '')}${p.kategori ? ' &middot; ' : ''}<span class="pub-badge">${esc(p.kategori || '')}</span></div>
-            ${p.fileLokal ? '<span style="font-size:.7rem;color:#10b981;font-weight:700">&#10003; PDF Tersedia</span>' : ''}
+            ${status}
+            ${p.snippet ? `<div class="pdf-snippet" style="margin:6px 0 0">&ldquo;...${esc(p.snippet)}...&rdquo;</div>` : ''}
           </div>
         </a>`;
     });
@@ -503,19 +512,22 @@ function tambahResponBot(data) {
         ? `<img class="pdf-cover" src="${esc(cUrl)}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
         : '';
       const ph = `<div class="pdf-cover-ph" ${cUrl ? 'style="display:none"' : ''}>&#128196;</div>`;
-      html += `<div class="pdf-card">
+      const pdfSrc = linkPdf(p);
+      const klik = pdfSrc || p.url_bps || '';
+      const hal = parseInt(p.halaman, 10) || 0;
+      html += `<div class="pdf-card${klik ? ' klik' : ''}" ${klik ? `data-buka="${esc(klik)}" onclick="bukaKartu(event,this)"` : ''}>
         <div class="pdf-header">
           ${cover}${ph}
           <div class="pdf-info">
             <div class="pdf-title">${esc(p.judul)}</div>
-            <div class="pdf-year">Tahun ${esc(String(p.tahun || '-'))}</div>
+            <div class="pdf-year">Tahun ${esc(String(p.tahun || '-'))}${hal ? ` &middot; <b style="color:var(--blue)">Halaman ${hal}</b>${p.hal_total ? ` dari ${esc(String(p.hal_total))}` : ''}` : ''}</div>
           </div>
         </div>
         ${p.snippet ? `<div class="pdf-snippet">&ldquo;...${esc(p.snippet)}...&rdquo;</div>` : ''}
         <div class="pdf-actions">
-          ${p.fileLokal ? `<a class="pdf-btn primary" href="${esc(p.fileLokal)}" target="_blank">
+          ${pdfSrc ? `<a class="pdf-btn primary" href="${esc(pdfSrc)}" target="_blank" rel="noopener">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Baca PDF</a>` : ''}
+            ${hal ? `Buka PDF di hal. ${hal}` : 'Buka PDF'}</a>` : ''}
           ${p.url_bps ? `<a class="pdf-btn secondary" href="${esc(p.url_bps)}" target="_blank" rel="noopener">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Lihat di BPS</a>` : ''}
@@ -575,6 +587,21 @@ function getInitial() {
 
 function esc(s) {
   return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Tautan file PDF: utamakan file PDF langsung dari BPS (url_pdf), lalu file lokal.
+// Bila ada nomor halaman kutipan, PDF dibuka langsung di halaman itu (#page=N).
+function linkPdf(p) {
+  const u = (p && (p.url_pdf || p.fileLokal)) || '';
+  const hal = p && parseInt(p.halaman, 10);
+  return u && hal > 0 ? `${u}#page=${hal}` : u;
+}
+
+// Klik di area kartu kutipan (di luar tombol) membuka PDF-nya.
+function bukaKartu(ev, el) {
+  if (ev.target.closest('a')) return;
+  const u = el.dataset.buka;
+  if (u) window.open(u, '_blank', 'noopener');
 }
 
 // Cover BPS lewat proxy lokal (hindari blok CORP browser)

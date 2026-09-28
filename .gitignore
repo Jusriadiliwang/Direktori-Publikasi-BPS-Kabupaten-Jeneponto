@@ -31,3 +31,7 @@ db/admin.json
 # Logs
 *.log
 npm-debug.log*
+
+# PDF Sulsel hasil unduh otomatis untuk indeks (server mengunduh sendiri saat perlu)
+downloads/sulsel/*.pdf
+!downloads/sulsel/daa2025-2025.pdf

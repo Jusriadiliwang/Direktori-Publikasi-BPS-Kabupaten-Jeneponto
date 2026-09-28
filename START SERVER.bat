@@ -28,6 +28,12 @@ for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| findstr ":3000 " ^| findstr "L
 )
 timeout /t 1 /nobreak >nul
 
+:: API key BPS WebAPI (gratis: https://webapi.bps.go.id) agar kutipan di Chat
+:: langsung membuka file PDF. Simpan di file .env (baris: BPS_API_KEY=...) atau
+:: set sebagai variabel lingkungan Windows bernama BPS_API_KEY. Jangan tulis
+:: key langsung di file ini karena file ini ikut ke repositori.
+if "%BPS_API_KEY%"=="" if exist .env for /f "usebackq tokens=1,* delims==" %%a in (".env") do if /i "%%a"=="BPS_API_KEY" set "BPS_API_KEY=%%b"
+
 :: Start server
 echo  Memulai server...
 echo.

@@ -18,17 +18,28 @@ def bersihkan(teks):
     t = re.sub(r'[^\w\s.,:\-%()/]', ' ', t)
     return re.sub(r'\s+', ' ', t).strip()
 
-def pecah_chunk(teks, ukuran=600, overlap=100):
-    """Pecah teks panjang jadi chunk untuk search."""
-    words = teks.split()
-    chunks = []
-    i = 0
-    while i < len(words):
-        chunk = ' '.join(words[i:i+ukuran])
-        if len(chunk) > 50:
-            chunks.append(chunk)
-        i += ukuran - overlap
-    return chunks
+INDEKS_VERSI = 2  # format indeks; harus sama dengan pdf-indexer.js
+
+def pecah_chunk(halaman, ukuran=350):
+    """Pecah teks jadi chunk SEJAJAR HALAMAN (tidak melintasi dua halaman;
+    halaman panjang dipecah tiap `ukuran` kata).
+    Mengembalikan (chunks, chunk_mulai, hal_mulai):
+      chunk_mulai = indeks kata awal tiap chunk
+      hal_mulai   = [[nomor_halaman, indeks_kata_awal], ...]
+    sehingga skor pencarian = skor per halaman dan nomor halaman kutipan tepat."""
+    words, hal_mulai, chunks, chunk_mulai = [], [], [], []
+    for h in halaman:
+        w = h['teks'].split()
+        if not w:
+            continue
+        hal_mulai.append([h['hal'], len(words)])
+        for i in range(0, len(w), ukuran):
+            chunk = ' '.join(w[i:i+ukuran])
+            if len(chunk) > 30:
+                chunks.append(chunk)
+                chunk_mulai.append(len(words) + i)
+        words.extend(w)
+    return chunks, chunk_mulai, hal_mulai
 
 def ekstrak_pdf(path):
     teks_halaman = []
@@ -97,7 +108,7 @@ def main():
             continue
 
         semua_teks = ' '.join(h['teks'] for h in halaman)
-        chunks = pecah_chunk(semua_teks, ukuran=400, overlap=80)
+        chunks, chunk_mulai, hal_mulai = pecah_chunk(halaman)
 
         entry = {
             'file'     : fname,
@@ -108,7 +119,10 @@ def main():
             'url_bps'  : url_bps,
             'cover'    : cover,
             'hal_total': len(halaman),
-            'chunks'   : chunks[:120],          # maks 120 chunk per PDF
+            'chunks'   : chunks,                 # satu chunk = satu (bagian) halaman
+            'chunk_mulai': chunk_mulai,          # indeks kata awal tiap chunk
+            'hal_mulai': hal_mulai,              # [[halaman, indeks kata awal], ...]
+            'indeks_versi': INDEKS_VERSI,
             'teks_full': semua_teks[:8000],      # preview 8 KB pertama
         }
         index.append(entry)

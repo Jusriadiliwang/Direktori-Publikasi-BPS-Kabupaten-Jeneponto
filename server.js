@@ -13,6 +13,7 @@ const multer   = require('multer');
 const { chromium } = require('playwright');
 const { refreshIndikator } = require('./refresh-indikator');
 const pdfIndexer = require('./pdf-indexer');
+const { sinkronUrlPdf } = require('./bps-webapi');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -224,35 +225,239 @@ function sumberPdf(own) {
   return out;
 }
 
-function cariDalamPDF(keyword, maks = 4) {
-  const index = sumberPdf(getPdfIndex());
+// Nomor halaman tempat posisi karakter `pos` di dalam chunk ke-idx berada.
+// Butuh chunk_mulai & hal_mulai (indeks kata) dari indexer versi baru; null jika tidak ada.
+function halamanKutipan(doc, idx, chunk, pos) {
+  if (!Array.isArray(doc.chunk_mulai) || !Array.isArray(doc.hal_mulai) || !doc.hal_mulai.length) return null;
+  const mulai = doc.chunk_mulai[idx];
+  if (typeof mulai !== 'number') return null;
+  const offset = pos > 0 ? chunk.slice(0, pos).split(/\s+/).filter(Boolean).length : 0;
+  const kata = mulai + offset;
+  let hal = doc.hal_mulai[0][0];
+  for (const [h, k] of doc.hal_mulai) { if (k <= kata) hal = h; else break; }
+  return hal;
+}
+
+// Kata yang terlalu umum untuk pencarian isi PDF (muncul di hampir semua halaman).
+const STOP_PDF = new Set(['jumlah','total','banyak','banyaknya','nilai','angka','data','tahun','berapa','berapakah',
+  'tingkat','persentase','persen','rata','laju','indeks','kecamatan','kec','desa','kelurahan',
+  'terbanyak','tertinggi','terendah','terbesar','terkecil','paling','sedikit','tren','perkembangan',
+  'kabupaten','kab','jeneponto','provinsi','sulsel','sulawesi','selatan','dan','atau','yang','di','dari','untuk',
+  'dengan','pada','oleh','ini','itu','dalam','adalah','apa','apakah','bagaimana','tentang','menurut','per','tiap','setiap']);
+
+// Sinonim/istilah padanan (termasuk bahasa Inggris, karena publikasi BPS dwibahasa).
+// Kunci = kata dasar dari pertanyaan; nilai = bentuk lain yang dianggap kata yang sama.
+const SINONIM_PDF = {
+  penduduk    : ['population','jiwa','kependudukan'],
+  kemiskinan  : ['miskin','poverty','poor','garis kemiskinan'],
+  miskin      : ['kemiskinan','poverty'],
+  ipm         : ['indeks pembangunan manusia','pembangunan manusia','human development'],
+  pengangguran: ['tpt','unemployment','penganggur'],
+  pdrb        : ['produk domestik regional bruto','gross regional domestic','grdp'],
+  ekonomi     : ['economic','economy','pertumbuhan ekonomi'],
+  inflasi     : ['inflation','indeks harga konsumen','ihk'],
+  pertanian   : ['agriculture','agricultural','padi','tanaman pangan','sawah'],
+  sawah       : ['lahan sawah','wetland','paddy field'],
+  sekolah     : ['pendidikan','school','education','murid','siswa'],
+  pendidikan  : ['education','sekolah'],
+  kesehatan   : ['health','rumah sakit','puskesmas'],
+  kerja       : ['ketenagakerjaan','labor','labour','angkatan kerja','tpak','employment'],
+  gini        : ['rasio gini','gini ratio','ketimpangan'],
+  aset        : ['asset','kekayaan daerah','neraca'],
+  desa        : ['village','kelurahan','desa/kelurahan','pemerintahan desa','banyaknya desa','jumlah desa'],
+  kriminalitas: ['kejahatan','crime','tindak pidana','kriminal','kepolisian'],
+  kriminal    : ['kejahatan','crime','tindak pidana','kriminalitas'],
+  ternak      : ['peternakan','livestock','populasi ternak','ekor'],
+  sapi        : ['sapi potong','sapi perah','ekor'],
+  perikanan   : ['fishery','fisheries','ikan','nelayan','tangkap','budidaya'],
+  hotel       : ['akomodasi','penginapan','pariwisata','tamu hotel'],
+  wisatawan   : ['pariwisata','tourism','kunjungan wisata','tamu'],
+  jalan       : ['road','panjang jalan','kondisi jalan'],
+  kendaraan   : ['vehicle','bermotor','kendaraan bermotor'],
+  listrik     : ['pln','electricity','pelanggan listrik','daya tersambung'],
+  koperasi    : ['cooperative','kud','usaha mikro'],
+  pasar       : ['market','perdagangan','pasar tradisional'],
+  masjid      : ['tempat ibadah','rumah ibadah','mosque'],
+  puskesmas   : ['fasilitas kesehatan','health center','kesehatan'],
+  rumah       : ['rumah sakit','hospital','rumah tangga'],
+  hujan       : ['curah hujan','rainfall','iklim','climate'],
+  murid       : ['siswa','student','pupils','sekolah'],
+  garam       : ['salt','tambak garam','produksi garam'],
+  rumput      : ['rumput laut','seaweed','budidaya laut'],
+  kecamatan   : ['subdistrict','sub district'],
+  harapan     : ['angka harapan hidup','life expectancy','umur harapan hidup'],
+  luas        : ['area','hektar','km2'],
+  wilayah     : ['luas wilayah','area','geografis','km2'],
+  'luas wilayah': ['km2','km²','luas daerah','total area'],
+  'rumah sakit' : ['hospital','rs ','rsud'],
+  'rumah tangga': ['household','ruta','kepala keluarga'],
+  'garis kemiskinan': ['poverty line'],
+  'penduduk miskin' : ['poor people','kemiskinan'],
+  'angkatan kerja'  : ['labor force','tpak','bekerja'],
+  'pengangguran terbuka': ['tpt','unemployment rate'],
+  'harapan hidup'   : ['life expectancy','uhh','ahh'],
+  'lama sekolah'    : ['years of schooling','hls','rls'],
+  'per kapita'      : ['per capita','perkapita'],
+  'pertumbuhan ekonomi': ['economic growth','laju pertumbuhan','pdrb'],
+  'lahan sawah'     : ['sawah','wetland','paddy field','luas baku'],
+  'curah hujan'     : ['rainfall','hari hujan'],
+  'kendaraan bermotor': ['motor vehicle','kendaraan'],
+  'jenis kelamin'   : ['sex','laki-laki','perempuan','rasio jenis kelamin'],
+  'kemahalan konstruksi': ['ikk','construction cost index','indeks kemahalan','konstruksi'],
+  konstruksi  : ['construction','bangunan','ikk'],
+  apbd        : ['anggaran','realisasi anggaran','keuangan daerah','budget'],
+};
+
+// Pola angka data statistik (pemisah ribuan/desimal Indonesia), bukan sekadar digit.
+const ANGKA_RE = /\b\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?\b|\b\d+[.,]\d+\b|\b\d{4,}\b/;
+const NAMA_KEC_RE = /\b(bangkala|tamalatea|bontoramba|binamu|turatea|batang|arungkeke|tarowang|kelara|rumbia)\b/i;
+
+// Frasa baku dua kata: dianggap satu kelompok kata kunci (lebih tajam daripada dua kata terpisah).
+const FRASA_PDF = ['luas wilayah','rumah sakit','rumah tangga','garis kemiskinan','penduduk miskin','angkatan kerja',
+  'pengangguran terbuka','harapan hidup','lama sekolah','per kapita','pertumbuhan ekonomi','lahan sawah','rumput laut',
+  'bawang merah','cabai rawit','cabai besar','kendaraan bermotor','curah hujan','tenaga kerja','asli daerah','beban ketergantungan',
+  'jenis kelamin','kemahalan konstruksi','pembangunan manusia','pembangunan gender','pemberdayaan gender','melek huruf','air bersih'];
+
+// Siapkan kelompok kata kunci dari pertanyaan: tiap kelompok = kata/frasa + sinonimnya.
+function siapkanKw(keyword) {
+  let teks = keyword.toLowerCase().replace(/[?!.,;:()"']/g, ' ').replace(/\s+/g, ' ').trim();
+  const frasa = [];
+  for (const f of FRASA_PDF) {
+    if (teks.includes(f)) { frasa.push(f); teks = teks.replace(f, ' '); }
+  }
+  const kata = teks.split(/\s+/).filter(w => w.length > 2);
+  const tahun = kata.filter(w => /^20\d\d$/.test(w));
+  let inti = kata.filter(w => !STOP_PDF.has(w) && !/^\d+$/.test(w));
+  if (!inti.length && !frasa.length) inti = kata.filter(w => !/^\d+$/.test(w));
+  const grup = [
+    ...frasa.map(f => { const sin = SINONIM_PDF[f] || []; return [f, ...sin]; }),
+    ...inti.map(w => {
+      const dasar = w.replace(/(nya|kah|lah)$/, '');
+      const sin = SINONIM_PDF[dasar] || SINONIM_PDF[w] || [];
+      return [dasar, ...sin].map(s => s.toLowerCase());
+    }),
+  ];
+  return { grup, tahun };
+}
+
+// Cari kata kunci di sebuah index PDF; kembalikan kutipan + nomor halaman.
+// Chunk = satu (bagian) halaman. Skor:
+//  - kelompok kata kunci berbeda yang muncul dalam satu jendela 40 kata (kedekatan)
+//  - kelompok berbeda yang muncul di mana pun pada halaman
+//  - frekuensi kemunculan (dibatasi)
+//  - angka statistik di dekat kata kunci, tahun yang ditanya
+//  - penalti sampul / kata pengantar / daftar isi / daftar tabel
+function cariDiIndex(index, keyword, maks = 4) {
   if (!index.length) return [];
-  const kwWords = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  if (!kwWords.length) return [];
+  const { grup, tahun } = siapkanKw(keyword);
+  if (!grup.length) return [];
+  const JENDELA = 40;
 
   const hasil = [];
   for (const doc of index) {
-    let bestChunk = '', bestScore = 0;
-    for (const chunk of (doc.chunks || [])) {
+    const chunks = doc.chunks || [];
+    if (!chunks.length) continue;
+
+    // Posisi tiap kelompok kata kunci di tiap halaman (dihitung sekali)
+    const perChunk = chunks.map(chunk => {
       const cl = chunk.toLowerCase();
-      const score = kwWords.reduce((s, w) => s + (cl.includes(w) ? 1 : 0), 0);
-      if (score > bestScore) { bestScore = score; bestChunk = chunk; }
-    }
-    if (bestScore >= 1) {
-      const sents = bestChunk.split(/(?<=[.;])\s+/);
-      const rel   = sents.find(s => kwWords.some(w => s.toLowerCase().includes(w))) || sents[0] || '';
+      const kataArr = cl.split(/\s+/);
+      const posisi = grup.map(() => []);
+      grup.forEach((g, gi) => {
+        for (const s of g) {
+          if (s.includes(' ')) {                         // frasa multi-kata: cari di teks utuh
+            let p = cl.indexOf(s);
+            while (p !== -1) { posisi[gi].push(cl.slice(0, p).split(/\s+/).length - 1); p = cl.indexOf(s, p + s.length); }
+          } else {
+            kataArr.forEach((k, ki) => { if (k.startsWith(s)) posisi[gi].push(ki); });
+          }
+        }
+      });
+      return { cl, kataArr, posisi };
+    });
+
+    // Bobot kelompok = seberapa membedakan ia di dokumen INI. Kata yang muncul di
+    // >50% halaman (mis. nama kecamatan pada buku "Kecamatan X Dalam Angka", atau
+    // "ipm" pada buku IPM) tidak bisa menentukan halaman → bobot kecil.
+    const df = grup.map((_, gi) => perChunk.filter(c => c.posisi[gi].length).length / chunks.length);
+    const bobot = df.map(f => (f > 0.5 ? 0.3 : 1));
+    // Bila ada kata kunci pembeda dalam pertanyaan tetapi tidak satu pun muncul di
+    // dokumen ini, dokumen dianggap tidak membahas topiknya → tidak ada halaman.
+    const adaPembeda = df.some((f, gi) => f > 0 && bobot[gi] === 1);
+    const perluPembeda = bobot.some(b => b === 1);
+    if (perluPembeda && !adaPembeda) continue;
+
+    let best = null;
+    perChunk.forEach(({ cl, kataArr, posisi }, i) => {
+      const grupAda = posisi.reduce((s, p, gi) => s + (p.length ? bobot[gi] : 0), 0);
+      if (!grupAda) return;
+      if (adaPembeda && !posisi.some((p, gi) => p.length && bobot[gi] === 1)) return; // halaman tanpa kata pembeda
+
+      // Kedekatan: bobot kelompok berbeda terbanyak dalam satu jendela kata
+      let dekatMaks = 0, pusat = -1;
+      posisi.forEach((p, gi) => { if (p.length && bobot[gi] > dekatMaks) { dekatMaks = bobot[gi]; pusat = p[0]; } });
+      if (grup.length > 1) {
+        const semua = [];
+        posisi.forEach((arr, gi) => arr.forEach(k => semua.push([k, gi])));
+        semua.sort((a, b) => a[0] - b[0]);
+        for (let a = 0; a < semua.length; a++) {
+          const set = new Set();
+          for (let b = a; b < semua.length && semua[b][0] - semua[a][0] <= JENDELA; b++) set.add(semua[b][1]);
+          const w = [...set].reduce((s, gi) => s + bobot[gi], 0);
+          if (w > dekatMaks) { dekatMaks = w; pusat = semua[a][0]; }
+        }
+      }
+
+      const hits = Math.min(posisi.reduce((s, p, gi) => s + p.length * bobot[gi], 0), 12);
+      const sekitar = kataArr.slice(Math.max(0, pusat - 25), pusat + 25).join(' ');
+      const adaAngka = ANGKA_RE.test(sekitar);
+      const adaTahun = tahun.length && tahun.some(t => cl.includes(t));
+      const daftar = /daftar isi|table of contents|daftar tabel|list of tables|daftar gambar|list of figures|daftar grafik|daftar lampiran|list of appendi|penjelasan teknis|technical note|konsep dan definisi|glosarium|glossary/.test(cl)
+        || (cl.match(/\.{4,}/g) || []).length >= 3
+        || (cl.match(/\b(tabel|table|gambar|figure|lampiran|appendix)\s+\d+(\.\d+)*\b/g) || []).length >= 6;
+      // Halaman ulasan/uraian (bukan tabel mentah) paling informatif untuk dibaca
+      const ulasan = /\bulasan\b|\bdescription\b|\buraian\b|\banalisis\b/.test(cl) && !daftar;
+      const sampul = i === 0 || /kata pengantar|preface|katalog\s*[:/]|isbn|issn|tim penyusun|penanggung jawab/.test(cl);
+
+      const score = dekatMaks * 14 + grupAda * 6 + hits + (adaAngka ? 6 : 0) + (adaTahun ? 5 : 0) + (ulasan ? 3 : 0)
+        - (daftar ? 18 : 0) - (sampul ? 8 : 0);
+      if (!best || score > best.score) best = { score, chunk: chunks[i], idx: i, pusat, kataArr };
+    });
+
+    if (best) {
+      // Publikasi rujukan umum kabupaten (Dalam Angka / Statistik Daerah) sedikit
+      // diutamakan saat skor berimbang dengan publikasi tematik.
+      const rujukan = /dalam angka|statistik daerah/i.test(doc.judul || '') && !/^kecamatan\s/i.test(doc.judul || '');
+      const skorDoc = best.score + (rujukan ? 3 : 0);
+      // Kutipan: ±22 kata di sekitar pusat jendela terbaik
+      const a = Math.max(0, best.pusat - 12), b = Math.min(best.kataArr.length, best.pusat + 30);
+      const asli = best.chunk.split(/\s+/);
+      const snippet = asli.slice(a, b).join(' ').substring(0, 280);
       hasil.push({
         judul    : doc.judul,
         tahun    : doc.tahun,
         fileLokal: doc.fileLokal || null,
         url_bps  : doc.url_bps  || '',
         cover    : doc.cover    || '',
-        snippet  : rel.trim().substring(0, 280),
-        skor     : bestScore
+        halaman  : halamanKutipan(doc, best.idx, best.chunk, 0),
+        hal_total: doc.hal_total || null,
+        snippet,
+        skor     : skorDoc
       });
     }
   }
   return hasil.sort((a, b) => b.skor - a.skor).slice(0, maks);
+}
+
+function cariDalamPDF(keyword, maks = 4) {
+  let index = sumberPdf(getPdfIndex());
+  // Buku "Kecamatan X Dalam Angka" hanya relevan bila pertanyaan menyebut kecamatannya;
+  // untuk pertanyaan tingkat kabupaten pakai publikasi kabupaten saja.
+  if (!NAMA_KEC_RE.test(keyword)) {
+    const kab = index.filter(d => !/^kecamatan\s/i.test(d.judul || ''));
+    if (kab.length) index = kab;
+  }
+  return cariDiIndex(index, keyword, maks);
 }
 
 // ── PDF Index Sulsel ────────────────────────────────────────────
@@ -265,34 +470,125 @@ function getPdfIndexSulsel() {
 }
 
 function cariDalamPDFSulsel(keyword, maks = 4) {
-  const index = sumberPdf(getPdfIndexSulsel());
-  if (!index.length) return [];
-  const kwWords = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  if (!kwWords.length) return [];
+  return cariDiIndex(sumberPdf(getPdfIndexSulsel()), keyword, maks);
+}
 
-  const hasil = [];
-  for (const doc of index) {
-    let bestChunk = '', bestScore = 0;
-    for (const chunk of (doc.chunks || [])) {
-      const cl = chunk.toLowerCase();
-      const score = kwWords.reduce((s, w) => s + (cl.includes(w) ? 1 : 0), 0);
-      if (score > bestScore) { bestScore = score; bestChunk = chunk; }
-    }
-    if (bestScore >= 1) {
-      const sents = bestChunk.split(/(?<=[.;])\s+/);
-      const rel   = sents.find(s => kwWords.some(w => s.toLowerCase().includes(w))) || sents[0] || '';
-      hasil.push({
-        judul    : doc.judul,
-        tahun    : doc.tahun,
-        fileLokal: doc.fileLokal || null,
-        url_bps  : doc.url_bps  || '',
-        cover    : doc.cover    || '',
-        snippet  : rel.trim().substring(0, 280),
-        skor     : bestScore
-      });
-    }
+// Path absolut sebuah fileLokal (/uploads/files/… atau /uploads/sulsel-files/…), null jika tidak ada.
+function pathFileLokal(fileLokal) {
+  if (!fileLokal || typeof fileLokal !== 'string') return null;
+  const nama = path.basename(fileLokal);
+  const dir  = fileLokal.startsWith('/uploads/sulsel-files/') ? SULSEL_DL_DIR : path.join(UPLOAD_DIR, 'files');
+  const abs  = path.join(dir, nama);
+  return fs.existsSync(abs) ? abs : null;
+}
+
+// Salinan objek dengan fileLokal dikosongkan bila filenya tidak ada di server ini.
+function bersihkanLokal(o) {
+  if (!o || !o.fileLokal || pathFileLokal(o.fileLokal)) return o;
+  return { ...o, fileLokal: null };
+}
+
+// Lengkapi hasil pencarian PDF dengan tautan langsung file PDF BPS (url_pdf)
+// dari data publikasi, dicocokkan lewat URL halaman BPS (url_bps) atau fileLokal.
+function lengkapiUrlPdf(pdfHasil, allPub) {
+  if (!pdfHasil || !pdfHasil.length) return pdfHasil;
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const byUrl = new Map(), byLokal = new Map(), byJudul = new Map();
+  for (const p of allPub || []) {
+    if (!p.url_pdf) continue;
+    if (p.url)       byUrl.set(p.url, p.url_pdf);
+    if (p.fileLokal) byLokal.set(p.fileLokal, p.url_pdf);
+    if (p.judul)     byJudul.set(norm(p.judul), p.url_pdf);
   }
-  return hasil.sort((a, b) => b.skor - a.skor).slice(0, maks);
+  return pdfHasil.map(h => bersihkanLokal({
+    ...h,
+    url_pdf: h.url_pdf || byUrl.get(h.url_bps) || byLokal.get(h.fileLokal) || byJudul.get(norm(h.judul)) || '',
+  }));
+}
+
+// ── Halaman untuk kartu publikasi ────────────────────────────────
+// Kartu publikasi (hasil cariPub) diberi nomor halaman + kutipan dengan mencari
+// kata kunci di indeks PDF publikasi tsb. Bila publikasi belum terindeks tetapi
+// punya url_pdf, PDF diunduh & diindeks di latar belakang untuk permintaan berikutnya.
+const _antriIndex = new Set();
+let _rantaiIndex = Promise.resolve();
+// Di platform cloud (DATA_DIR di-set, disk terbatas) PDF yang diunduh hanya
+// untuk diindeks dihapus setelah selesai; di komputer lokal disimpan.
+const SIMPAN_PDF_INDEKS = process.env.SIMPAN_PDF_INDEKS ? process.env.SIMPAN_PDF_INDEKS !== '0' : !process.env.DATA_DIR;
+
+// Nama file PDF: judul (dipotong) + hash pendek URL agar judul panjang yang hanya
+// berbeda di ujung (mis. seri Sensus Pertanian UTP) tidak saling menimpa.
+function slugPdf(judul, url = '') {
+  const s = String(judul || 'publikasi').replace(/[\\/:*?"<>|]/g, ' ').trim().replace(/\s+/g, '_');
+  const h = url ? '_' + crypto.createHash('md5').update(String(url)).digest('hex').slice(0, 8) : '';
+  return (s.slice(0, 70) || 'publikasi') + h + '.pdf';
+}
+
+function antriIndexPublikasi(pub, wilayah = 'jeneponto') {
+  if (!pub || !pub.url_pdf || _antriIndex.has(pub.url_pdf)) return;
+  _antriIndex.add(pub.url_pdf);
+  const sulsel   = wilayah === 'sulsel';
+  const indexFile = sulsel ? SULSEL_PDF_INDEX_FILE : UPLOAD_PDF_INDEX_FILE;
+  const dir       = sulsel ? SULSEL_DL_DIR : path.join(UPLOAD_DIR, 'files');
+  const prefix    = sulsel ? '/uploads/sulsel-files/' : '/uploads/files/';
+  _rantaiIndex = _rantaiIndex.then(async () => {
+    const nama = pub.fileLokal ? path.basename(pub.fileLokal) : slugPdf(pub.judul, pub.url);
+    const abspath = path.join(dir, nama);
+    let diunduh = false;
+    try {
+      if (!fs.existsSync(abspath)) {
+        console.log(`[index-pub] mengunduh ${nama}...`);
+        await unduhKeFile(pub.url_pdf, abspath);
+        diunduh = true;
+      }
+      const r = await pdfIndexer.upsertUpload(indexFile, {
+        file: nama, fileLokal: prefix + nama, judul: pub.judul, tahun: pub.tahun,
+        kategori: pub.kategori, url_bps: pub.url || '', cover: pub.cover || '',
+      }, abspath);
+      if (r.ok) { resetPdfCaches(); console.log(`[index-pub] ${pub.judul} → ${r.chunks} chunk`); }
+      if (diunduh && !SIMPAN_PDF_INDEKS) fs.rmSync(abspath, { force: true });
+    } catch (e) {
+      console.error('[index-pub]', nama, e.message);
+    } finally {
+      _antriIndex.delete(pub.url_pdf);
+    }
+  }).catch(() => {});
+}
+
+function lengkapiHalamanPub(pubs, keyword, index, wilayah = 'jeneponto') {
+  if (!pubs || !pubs.length) return pubs;
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return pubs.map(p => {
+    const doc = index.find(d => (d.url_bps && d.url_bps === p.url) || norm(d.judul) === norm(p.judul));
+    if (!doc) { antriIndexPublikasi(p, wilayah); return p; }
+    const hit = cariDiIndex([doc], keyword, 1)[0];
+    if (!hit) return { ...p, hal_total: doc.hal_total || null };
+    return { ...p, halaman: hit.halaman, hal_total: hit.hal_total, snippet: hit.snippet };
+  });
+}
+
+// Pra-indeks isi publikasi terbaru saat server start, agar nomor halaman sudah
+// tersedia sejak pertanyaan pertama (bukan baru setelah publikasi pernah muncul).
+// Dibatasi (tahun & jumlah) agar indeks dan disk tidak membengkak; publikasi
+// lain tetap diindeks otomatis saat pertama kali muncul di chat.
+const PRAINDEKS_TAHUN_MIN = Number(process.env.PRAINDEKS_TAHUN_MIN) || 2024;
+const PRAINDEKS_MAKS      = Number(process.env.PRAINDEKS_MAKS) || 60;
+function praIndeksPublikasi() {
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const kandidat = [];
+  for (const [wilayah, file, getIndex] of [['jeneponto', DATA_FILE, getPdfIndex], ['sulsel', SULSEL_PUB_FILE, getPdfIndexSulsel]]) {
+    if (!fs.existsSync(file)) continue;
+    const index = sumberPdf(getIndex());
+    const ada = new Set(index.flatMap(d => [d.url_bps, norm(d.judul)]).filter(Boolean));
+    baca(file)
+      .filter(p => p.url_pdf && p.kategori !== 'Lainnya' && (p.tahun || 0) >= PRAINDEKS_TAHUN_MIN && !ada.has(p.url) && !ada.has(norm(p.judul)))
+      .forEach(p => kandidat.push({ p, wilayah }));
+  }
+  // Jeneponto lebih dulu, lalu yang terbaru
+  kandidat.sort((a, b) => (a.wilayah === 'sulsel') - (b.wilayah === 'sulsel') || (b.p.tahun || 0) - (a.p.tahun || 0));
+  const dipilih = kandidat.slice(0, PRAINDEKS_MAKS);
+  dipilih.forEach(({ p, wilayah }) => antriIndexPublikasi(p, wilayah));
+  if (dipilih.length) console.log(`[index-pub] ${dipilih.length} publikasi ≥${PRAINDEKS_TAHUN_MIN} diantrekan untuk pra-indeks di latar belakang`);
 }
 
 // ── Peta sumber publikasi untuk tiap kategori indikator ──────
@@ -369,7 +665,8 @@ app.post('/api/chat', (req, res) => {
   // ── Helper: cari publikasi ────────────────────────────
   function cariPub(keyword, maks = 5) {
     const stopWords = new Set(['dan','atau','yang','di','dari','untuk','dengan','ke','pada','oleh',
-      'ini','itu','dalam','angka','adalah','berapa','apa','berdasarkan','bagaimana','dimana','kenapa']);
+      'ini','itu','dalam','angka','adalah','berapa','apa','berdasarkan','bagaimana','dimana','kenapa',
+      'data','jeneponto','kabupaten','kab','tampilkan','lihat','cari','tentang','informasi','publikasi','buku','laporan','jumlah','tahun']);
     const kwWords = keyword.toLowerCase().replace(/[?!.,;:()]/g, ' ').split(/\s+/)
       .filter(w => w.length > 2 && !stopWords.has(w));
     if (!kwWords.length) return [];
@@ -383,7 +680,7 @@ app.post('/api/chat', (req, res) => {
         const tb = ((b.judul || '') + (b.deskripsi || '')).toLowerCase();
         const sa = kwWords.filter(w => ta.includes(w)).length;
         const sb = kwWords.filter(w => tb.includes(w)).length;
-        return sb - sa;
+        return (sb - sa) || ((b.tahun || 0) - (a.tahun || 0));
       })
       .slice(0, maks);
   }
@@ -710,15 +1007,18 @@ app.post('/api/chat', (req, res) => {
       }
     }
 
-    return res.json({ ok: true, tipe: tipeSul, jawaban: jawSul, dataKartu: kartuSul,
-      publikasi: pubSul, kecamatan: [], trendData: trendSul, saranKueri: saranSul,
-      pdfHasil: pdfSul, tabelMakro: [] });
+    const idxSul = sumberPdf(getPdfIndexSulsel());
+    return res.json({ ok: true, tipe: tipeSul, jawaban: jawSul,
+      dataKartu: kartuSul.map(k => ({ ...k, sumber: k.sumber ? lengkapiHalamanPub([bersihkanLokal(k.sumber)], lower, idxSul, 'sulsel')[0] : k.sumber })),
+      publikasi: lengkapiHalamanPub(pubSul.map(bersihkanLokal), lower, idxSul, 'sulsel'), kecamatan: [], trendData: trendSul, saranKueri: saranSul,
+      pdfHasil: lengkapiUrlPdf(pdfSul, sulsulPub), tabelMakro: [] });
   }
 
   let jawaban    = '';
   let tipe       = 'info';
   let dataKartu  = [];
   let publikasi  = [];
+  let kwHalaman  = lower;   // kata kunci untuk menentukan halaman pada kartu publikasi/sumber
   let kecamatan  = [];
   let trendData  = [];
   let saranKueri = [];
@@ -810,7 +1110,10 @@ app.post('/api/chat', (req, res) => {
       kecamatan = kec;
       jawaban   = `Data penduduk **Kecamatan ${kec.map(k => k.kecamatan).join(', ')}** di Kabupaten Jeneponto:`;
       publikasi = cariPub(`kecamatan ${namaKec} dalam angka`, 3);
-      pdfHasil  = cariDalamPDF(`kecamatan ${namaKec}`);
+      // Topik dari pertanyaan (mis. penduduk) + nama kecamatan; default penduduk
+      const topikKec = lower.replace(/\b(data|jumlah|kecamatan|kec|jeneponto|kabupaten|berapa|tampilkan|lihat)\b/g, ' ').replace(namaKec, ' ').trim();
+      kwHalaman = `${topikKec || 'penduduk'} ${namaKec}`;
+      pdfHasil  = cariDalamPDF(kwHalaman);
     } else if (isTertinggi) {
       const sorted = [...allKec].filter(k => k.kecamatan !== 'TOTAL').sort((a, b) => b.penduduk - a.penduduk);
       kecamatan  = sorted.slice(0, 3);
@@ -823,6 +1126,18 @@ app.post('/api/chat', (req, res) => {
       kecamatan  = allKec.filter(k => k.kecamatan !== 'TOTAL');
       const total = allKec.find(k => k.kecamatan === 'TOTAL');
       jawaban    = `Berikut data **penduduk seluruh kecamatan** di Kabupaten Jeneponto (Total: **${total?.penduduk.toLocaleString('id') || '418.966'} jiwa**):`;
+    }
+    // Sumber untuk tabel per kecamatan: halaman "penduduk menurut kecamatan" di
+    // publikasi kabupaten (Dalam Angka / Statistik Daerah), bukan buku per kecamatan.
+    if (!pdfHasil.length) {
+      kwHalaman = 'penduduk menurut kecamatan jenis kelamin';
+      const idxKab = sumberPdf(getPdfIndex()).filter(d => !/^kecamatan\s/i.test(d.judul || ''));
+      pdfHasil = cariDiIndex(idxKab, kwHalaman, 4);
+    }
+    if (!publikasi.length) {
+      publikasi = allPub
+        .filter(p => /^kabupaten jeneponto dalam angka/i.test(p.judul || ''))
+        .sort((a, b) => (b.tahun || 0) - (a.tahun || 0)).slice(0, 2);
     }
     saranKueri = ['Kecamatan dengan penduduk terbanyak', 'Kecamatan dengan penduduk paling sedikit', 'Berapa jumlah penduduk Jeneponto?'];
   }
@@ -876,7 +1191,8 @@ app.post('/api/chat', (req, res) => {
   // ═══ 5. DESA / POTENSI DESA ══════════════════════════
   else if (isDesa) {
     tipe      = 'pdf';
-    pdfHasil  = cariDalamPDF('desa kelurahan potensi');
+    kwHalaman = /jumlah|banyak|berapa/.test(lower) ? 'jumlah desa kelurahan kecamatan' : lower;
+    pdfHasil  = cariDalamPDF(kwHalaman);
     publikasi = cariPub('potensi desa dalam angka', 4);
     jawaban   = pdfHasil.length || publikasi.length
       ? `Berikut informasi **desa dan kelurahan** dari publikasi BPS Kabupaten Jeneponto:`
@@ -928,7 +1244,23 @@ app.post('/api/chat', (req, res) => {
   // Fallback: pastikan tabel makro selalu tersedia bila relevan dgn pertanyaan
   if (!tabelMakro.length) tabelMakro = cocokMakro(lower);
 
-  res.json({ ok: true, tipe, jawaban, dataKartu, publikasi, kecamatan, trendData, saranKueri, pdfHasil, tabelMakro });
+  // Fallback sumber: bila ada kartu indikator tetapi belum ada kutipan PDF,
+  // cari isi publikasi dengan nama indikatornya (lalu bentuk yang lebih umum).
+  if (!pdfHasil.length && dataKartu.length) {
+    const nama = String(dataKartu[0].nama || '').replace(/\(.*?\)/g, ' ').trim();
+    const kandidat = [nama, nama.split(/\s+/).slice(0, 2).join(' '), nama.split(/\s+/).sort((a, b) => b.length - a.length)[0]]
+      .filter(k => k && k.length > 3);
+    for (const k of kandidat) {
+      pdfHasil = cariDalamPDF(k);
+      if (pdfHasil.length) { kwHalaman = k; break; }
+    }
+  }
+
+  const idxJnp = sumberPdf(getPdfIndex());
+  res.json({ ok: true, tipe, jawaban,
+    dataKartu: dataKartu.map(k => ({ ...k, sumber: k.sumber ? lengkapiHalamanPub([bersihkanLokal(k.sumber)], kwHalaman, idxJnp)[0] : k.sumber })),
+    publikasi: lengkapiHalamanPub(publikasi.map(bersihkanLokal), kwHalaman, idxJnp), kecamatan, trendData, saranKueri,
+    pdfHasil: lengkapiUrlPdf(pdfHasil, allPub), tabelMakro });
 });
 
 // ══════════════════════════════════════════════════════
@@ -1645,7 +1977,10 @@ app.get('/api/admin/import', requireAdmin, async (req, res) => {
   await page.addInitScript(() => { Object.defineProperty(navigator,'webdriver',{get:()=>false}); });
 
   try {
-    const dataLama = baca(DATA_FILE).filter(p => p.lokal);
+    const semuaLama = baca(DATA_FILE);
+    const dataLama = semuaLama.filter(p => p.lokal);
+    // url_pdf hasil scrape-pdf-links.js tidak ada di daftar BPS; pertahankan.
+    const urlPdfLama = new Map(semuaLama.filter(p => p.url_pdf).map(p => [p.url, p.url_pdf]));
     await page.goto(`${BASE_URL}?page=1`, { waitUntil:'domcontentloaded', timeout:30000 });
     for (let i = 0; i < 20; i++) {
       const c = await page.evaluate(() => document.querySelectorAll('a.rounded-xl').length);
@@ -1717,6 +2052,7 @@ app.get('/api/admin/import', requireAdmin, async (req, res) => {
       await sleep(800);
     }
 
+    hasil.forEach(p => { if (urlPdfLama.has(p.url)) p.url_pdf = urlPdfLama.get(p.url); });
     const gabung=[...hasil,...dataLama];
     tulis(DATA_FILE,gabung);
     kirim({tipe:'indikator',pesan:'✓ Menyinkronkan indeks PDF lokal (upload admin)...'});
@@ -1737,6 +2073,84 @@ app.get('/api/admin/import', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Sinkron tautan file PDF publikasi (url_pdf) dari BPS WebAPI ─────
+// Key dari env BPS_API_KEY atau file .env (dimuat oleh bps-webapi.js).
+// Gratis, daftar di webapi.bps.go.id. Tanpa key, url_pdf bisa diisi manual
+// lewat scrape-pdf-links.js (AMBIL LINK PDF.bat).
+const BPS_API_KEY = process.env.BPS_API_KEY || '';
+async function sinkronSemuaUrlPdf(log = console.log) {
+  if (!BPS_API_KEY) return { ok: false, error: 'BPS_API_KEY belum di-set' };
+  const hasil = {};
+  for (const [wilayah, file] of [['jeneponto', DATA_FILE], ['sulsel', SULSEL_PUB_FILE]]) {
+    if (!fs.existsSync(file)) continue;
+    try {
+      hasil[wilayah] = await sinkronUrlPdf({ key: BPS_API_KEY, wilayah, file, log: m => log(`[url-pdf ${wilayah}] ${m}`) });
+      log(`[url-pdf ${wilayah}] +${hasil[wilayah].dilengkapi} tautan PDF, ${hasil[wilayah].belum} belum cocok`);
+    } catch (e) {
+      hasil[wilayah] = { error: e.message };
+      log(`[url-pdf ${wilayah}] gagal: ${e.message}`);
+    }
+  }
+  return { ok: true, hasil };
+}
+
+app.post('/api/admin/sinkron-pdf', requireAdmin, async (req, res) => {
+  res.json(await sinkronSemuaUrlPdf(() => {}));
+});
+
+// ── Lengkapi data halaman pada indeks PDF lama ──────────────────
+// Indeks yang dibuat sebelum ada chunk_mulai/hal_mulai diindeks ulang satu per
+// satu di latar belakang. Bila file PDF-nya tidak ada di server ini, diunduh
+// dulu dari url_pdf (webapi.bps.go.id, tidak dilindungi Cloudflare).
+async function unduhKeFile(url, tujuan) {
+  const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length < 500 || buf.subarray(0, 5).toString() !== '%PDF-') throw new Error('bukan file PDF');
+  fs.mkdirSync(path.dirname(tujuan), { recursive: true });
+  fs.writeFileSync(tujuan, buf);
+}
+
+async function lengkapiHalamanIndex() {
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const pubs = [
+    ...(fs.existsSync(DATA_FILE) ? baca(DATA_FILE) : []),
+    ...(fs.existsSync(SULSEL_PUB_FILE) ? baca(SULSEL_PUB_FILE) : []),
+  ];
+  const urlPdfUntuk = d => {
+    const p = pubs.find(x => x.url_pdf && ((d.url_bps && x.url === d.url_bps) || norm(x.judul) === norm(d.judul)));
+    return p ? p.url_pdf : null;
+  };
+  const daftar = [
+    { file: PDF_INDEX_FILE,        dir: path.join(UPLOAD_DIR, 'files') },
+    { file: UPLOAD_PDF_INDEX_FILE, dir: path.join(UPLOAD_DIR, 'files') },
+    { file: SULSEL_PDF_INDEX_FILE, dir: SULSEL_DL_DIR },
+  ];
+  let n = 0;
+  for (const { file, dir } of daftar) {
+    if (!fs.existsSync(file)) continue;
+    let index = [];
+    try { index = baca(file); } catch { continue; }
+    for (const d of index) {
+      if (!d || (Number(d.indeks_versi) || 0) >= pdfIndexer.INDEKS_VERSI) continue;
+      const nama = path.basename(d.file || d.fileLokal || '');
+      if (!nama) continue;
+      const abspath = path.join(dir, nama);
+      try {
+        if (!fs.existsSync(abspath)) {
+          const u = urlPdfUntuk(d);
+          if (!u) continue;
+          console.log(`[index-halaman] mengunduh ${nama}...`);
+          await unduhKeFile(u, abspath);
+        }
+        const r = await pdfIndexer.upsertUpload(file, d, abspath);
+        if (r.ok) { n++; resetPdfCaches(); console.log(`[index-halaman] ${d.judul} → ${r.chunks} chunk`); }
+      } catch (e) { console.error('[index-halaman]', nama, e.message); }
+    }
+  }
+  if (n) console.log(`[index-halaman] ${n} PDF kini punya data halaman`);
+}
+
 // ── Start ────────────────────────────────────────────
 app.listen(PORT, () => {
   const d = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE)).length : 0;
@@ -1745,4 +2159,9 @@ app.listen(PORT, () => {
   console.log(`║  BPS Jeneponto v3.0  → http://localhost:${PORT}  ║`);
   console.log(`║  Publikasi: ${String(d).padEnd(5)} | Users: ${String(u).padEnd(5)}             ║`);
   console.log(`╚════════════════════════════════════════════╝\n`);
+  if (BPS_API_KEY) setTimeout(() => sinkronSemuaUrlPdf().catch(() => {}).then(() => lengkapiHalamanIndex()).then(() => praIndeksPublikasi()).catch(e => console.error('[index-halaman]', e.message)), 1500);
+  else {
+    console.log('[url-pdf] BPS_API_KEY tidak di-set (env atau file .env) — tautan PDF langsung tidak disinkron otomatis');
+    setTimeout(() => lengkapiHalamanIndex().then(() => praIndeksPublikasi()).catch(e => console.error('[index-halaman]', e.message)), 1500);
+  }
 });

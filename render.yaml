@@ -10,6 +10,9 @@ services:
         value: 20
       - key: DATA_DIR
         value: /data
+      # API key gratis dari https://webapi.bps.go.id — untuk tautan PDF langsung di chat
+      - key: BPS_API_KEY
+        sync: false
     disk:
       name: bps-data
       mountPath: /data
