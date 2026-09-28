@@ -35,17 +35,21 @@ nav{position:sticky;top:0;z-index:200;background:var(--navy);box-shadow:0 2px 20
 .nav-admin:hover{background:var(--blue2)}
 
 /* ── HERO ── */
-.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#061429 0%,#0d2a52 40%,#0f3872 70%,#1a5099 100%);min-height:340px;display:flex;align-items:center;justify-content:center}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#061429 0%,#0d2a52 40%,#0f3872 70%,#1a5099 100%);min-height:420px;display:flex;align-items:center;justify-content:center;padding-top:70px}
+/* Foto PLTB Jeneponto; tulisan "JENEPONTO" di foto dibiarkan terlihat (overlay atas tipis),
+   gradasi menebal ke bawah agar judul & kotak pencarian tetap terbaca */
+.hero-foto{position:absolute;inset:0;background:url('/assets/hero-jeneponto.jpg') center top/cover no-repeat;pointer-events:none}
+.hero-foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,41,.18) 0%,rgba(6,20,41,.32) 28%,rgba(13,42,82,.66) 55%,rgba(6,20,41,.86) 100%)}
 .hero-dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
 .hero-glow{position:absolute;top:-80px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(41,128,212,.25) 0%,transparent 70%);pointer-events:none}
 .hero-glow2{position:absolute;bottom:-100px;left:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(245,158,11,.12) 0%,transparent 70%);pointer-events:none}
 .hero-content{position:relative;z-index:2;text-align:center;padding:60px 20px 70px;max-width:760px}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:99px;margin-bottom:20px;letter-spacing:.5px;text-transform:uppercase}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(6,20,41,.55);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.95);font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:99px;margin-bottom:20px;letter-spacing:.5px;text-transform:uppercase;backdrop-filter:blur(4px)}
 .hero-badge span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
-.hero h1{color:var(--white);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.25;margin-bottom:12px}
+.hero h1{color:var(--white);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.25;margin-bottom:12px;text-shadow:0 2px 14px rgba(0,0,0,.55)}
 .hero h1 span{color:var(--accent)}
-.hero p{color:rgba(255,255,255,.7);font-size:.95rem;margin-bottom:32px;line-height:1.6}
+.hero p{color:rgba(255,255,255,.85);font-size:.95rem;margin-bottom:32px;line-height:1.6;text-shadow:0 1px 8px rgba(0,0,0,.6)}
 
 /* Search Box */
 .search-wrap{position:relative;max-width:660px;margin:0 auto}
@@ -237,6 +241,7 @@ footer a:hover{color:var(--white)}
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-foto"></div>
   <div class="hero-dots"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow2"></div>

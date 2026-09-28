@@ -347,6 +347,38 @@ function siapkanKw(keyword) {
 //  - frekuensi kemunculan (dibatasi)
 //  - angka statistik di dekat kata kunci, tahun yang ditanya
 //  - penalti sampul / kata pengantar / daftar isi / daftar tabel
+// Teks halaman tanpa header/footer berulang (judul buku, nama bab yang tercetak
+// di tiap halaman). Tanpa ini kata seperti "pertanian" pada buku Sensus Pertanian
+// muncul di semua halaman dan tidak bisa membedakan halaman. Frasa 6 kata yang
+// muncul di >=20% halaman dianggap boilerplate. Hasil di-cache per dokumen.
+const _bersihCache = new WeakMap();
+function chunksBersih(doc) {
+  if (_bersihCache.has(doc)) return _bersihCache.get(doc);
+  const chunks = doc.chunks || [];
+  const N = 6, ambang = Math.max(4, Math.ceil(chunks.length * 0.2));
+  const kataPer = chunks.map(c => c.split(/\s+/).filter(Boolean));
+  const hitung = new Map();
+  kataPer.forEach(w => {
+    const lihat = new Set();
+    const lw = w.map(x => x.toLowerCase());
+    for (let i = 0; i + N <= lw.length; i++) {
+      const s = lw.slice(i, i + N).join(' ');
+      if (!lihat.has(s)) { lihat.add(s); hitung.set(s, (hitung.get(s) || 0) + 1); }
+    }
+  });
+  const boiler = new Set([...hitung].filter(([, n]) => n >= ambang).map(([s]) => s));
+  const hasil = kataPer.map(w => {
+    if (!boiler.size) return w.join(' ');
+    const lw = w.map(x => x.toLowerCase()), buang = new Array(w.length).fill(false);
+    for (let i = 0; i + N <= lw.length; i++) {
+      if (boiler.has(lw.slice(i, i + N).join(' '))) for (let k = i; k < i + N; k++) buang[k] = true;
+    }
+    return w.filter((_, i) => !buang[i]).join(' ');
+  });
+  _bersihCache.set(doc, hasil);
+  return hasil;
+}
+
 function cariDiIndex(index, keyword, maks = 4) {
   if (!index.length) return [];
   const { grup, tahun } = siapkanKw(keyword);
@@ -355,7 +387,7 @@ function cariDiIndex(index, keyword, maks = 4) {
 
   const hasil = [];
   for (const doc of index) {
-    const chunks = doc.chunks || [];
+    const chunks = chunksBersih(doc);
     if (!chunks.length) continue;
 
     // Posisi tiap kelompok kata kunci di tiap halaman (dihitung sekali)
@@ -417,10 +449,18 @@ function cariDiIndex(index, keyword, maks = 4) {
         || (cl.match(/\b(tabel|table|gambar|figure|lampiran|appendix)\s+\d+(\.\d+)*\b/g) || []).length >= 6;
       // Halaman ulasan/uraian (bukan tabel mentah) paling informatif untuk dibaca
       const ulasan = /\bulasan\b|\bdescription\b|\buraian\b|\banalisis\b/.test(cl) && !daftar;
+      const jmlAngka = (cl.match(new RegExp(ANGKA_RE.source, 'g')) || []).length;
+      // Halaman konsep/definisi bernomor ("47. Rumah tangga usaha pertanian adalah ...") tanpa data
+      const definisi = (cl.match(/(^|\s)\d{1,3}\.\s+[a-z]/g) || []).length >= 5 && jmlAngka < 5;
+      // Halaman tabel data: judul tabel bernomor di awal + banyak angka statistik / nama kecamatan
+      const awal = kataArr.slice(0, 60).join(' ');
+      const jmlKec = (cl.match(new RegExp(NAMA_KEC_RE.source, 'gi')) || []).length;
+      const tabelData = /\b\d+\.\d+\s+(jumlah|banyaknya|persentase|luas|produksi|rata|nilai|jumlah)/i.test(awal) && (jmlAngka >= 8 || jmlKec >= 5);
       const sampul = i === 0 || /kata pengantar|preface|katalog\s*[:/]|isbn|issn|tim penyusun|penanggung jawab/.test(cl);
 
       const score = dekatMaks * 14 + grupAda * 6 + hits + (adaAngka ? 6 : 0) + (adaTahun ? 5 : 0) + (ulasan ? 3 : 0)
-        - (daftar ? 18 : 0) - (sampul ? 8 : 0);
+        + (tabelData ? 6 : 0) + (jmlKec >= 5 ? 3 : 0)
+        - (daftar ? 18 : 0) - (sampul ? 8 : 0) - (definisi ? 12 : 0);
       if (!best || score > best.score) best = { score, chunk: chunks[i], idx: i, pusat, kataArr };
     });
 
@@ -1670,6 +1710,11 @@ app.get('/api/sumber', (req, res) => {
 
 const coverCache = new Map();
 const COVER_TTL = 30 * 60 * 1000;
+// Cache sampul di disk: sekali berhasil diambil, tetap tampil walau server BPS sedang down.
+const COVER_DISK = path.join(UPLOAD_DIR, 'covers', 'cache');
+fs.mkdirSync(COVER_DISK, { recursive: true });
+const coverPathDisk = u => path.join(COVER_DISK, crypto.createHash('md5').update(u).digest('hex'));
+
 app.get('/api/cover', async (req, res) => {
   let u = req.query.url || req.query.u || '';
   if (!u) return res.status(400).json({ ok: false, error: 'Parameter url diperlukan' });
@@ -1680,28 +1725,53 @@ app.get('/api/cover', async (req, res) => {
   if (u.includes('_next/image') && m) {
     try { u = decodeURIComponent(m[1]); } catch { u = m[1]; }
   }
+  let host = '';
+  try { host = new URL(u).hostname; } catch {}
+  if (!/(^|\.)bps\.go\.id$/.test(host)) return res.status(400).json({ ok: false, error: 'Hanya sampul dari bps.go.id' });
 
   const hit = coverCache.get(u);
   const kirim = (type, buf) => {
     res.set('Content-Type', type);
-    res.set('Cache-Control', 'public, max-age=1800');
+    res.set('Cache-Control', 'public, max-age=86400');
     res.send(buf);
   };
   if (hit && Date.now() - hit.t < COVER_TTL) return kirim(hit.type, hit.buf);
 
-  try {
-    const r = await fetch(u, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36' },
-    });
-    if (!r.ok) return res.status(502).json({ ok: false, error: 'Sumber cover: HTTP ' + r.status });
-    const buf = Buffer.from(await r.arrayBuffer());
-    const type = r.headers.get('content-type') || 'image/jpeg';
-    if (coverCache.size > 250) coverCache.delete(coverCache.keys().next().value);
-    coverCache.set(u, { t: Date.now(), buf, type });
-    kirim(type, buf);
-  } catch (e) {
-    res.status(502).json({ ok: false, error: e.message });
+  const disk = coverPathDisk(u);
+  const dariDisk = () => {
+    if (!fs.existsSync(disk + '.bin')) return false;
+    try {
+      const type = fs.readFileSync(disk + '.type', 'utf-8') || 'image/jpeg';
+      const buf = fs.readFileSync(disk + '.bin');
+      coverCache.set(u, { t: Date.now(), buf, type });
+      kirim(type, buf);
+      return true;
+    } catch { return false; }
+  };
+
+  // Server sampul BPS punya dua host; coba keduanya.
+  const kandidat = [u];
+  if (host === 'web-api.bps.go.id') kandidat.push(u.replace('web-api.bps.go.id', 'webapi.bps.go.id'));
+  else if (host === 'webapi.bps.go.id') kandidat.push(u.replace('webapi.bps.go.id', 'web-api.bps.go.id'));
+
+  for (const target of kandidat) {
+    try {
+      const r = await fetch(target, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36' },
+        signal: AbortSignal.timeout(12000),
+      });
+      const type = r.headers.get('content-type') || '';
+      if (!r.ok || !type.startsWith('image/')) continue;
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 200) continue;
+      if (coverCache.size > 250) coverCache.delete(coverCache.keys().next().value);
+      coverCache.set(u, { t: Date.now(), buf, type });
+      try { fs.writeFileSync(disk + '.bin', buf); fs.writeFileSync(disk + '.type', type); } catch {}
+      return kirim(type, buf);
+    } catch {}
   }
+  if (dariDisk()) return;
+  res.status(502).json({ ok: false, error: 'Server sampul BPS tidak dapat dijangkau' });
 });
 
 // ══════════════════════════════════════════════════════
